@@ -48,8 +48,8 @@ cabal-version:       >=1.10
 
 library
   -- Modules exported by the library.
-  -- exposed-modules:
-
+  exposed-modules:    Text.ParserCombinators.UU.TyErr.Core
+                      Text.ParserCombinators.UU.TyErr.Derived
   -- Modules included in this library but not exported.
   -- other-modules:
 
