@@ -36,7 +36,7 @@ maintainer:          carlostome1990@gmail.com
 
 category:            Language
 
-build-type:          Simple
+build-type:          Custom
 
 -- Extra files to be distributed with the package, such as examples or a
 -- README.
@@ -50,8 +50,9 @@ library
   -- Modules exported by the library.
   exposed-modules:    Text.ParserCombinators.UU.TyErr.Core
                       Text.ParserCombinators.UU.TyErr.Derived
+                      Text.ParserCombinators.UU.TyErr
   -- Modules included in this library but not exported.
-  -- other-modules:
+  other-modules:      GHC.TypeErrors.Utils
 
   -- LANGUAGE extensions used by modules in this package.
   -- other-extensions:
