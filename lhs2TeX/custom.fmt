@@ -2,23 +2,43 @@
 
 %if style == newcode
 
+%format ^   =
+%format ^^  = " "
 %format !   = "''"
 %format !:      = "'':"
 %format nil = "''" []
 
 %else
 
-%format !      = " "
+%format ^   = " "
+%format ^^  = "\;"
+%format !      = "\:"
 %format !:     = ":"
 %format nil    = "[]"
 %format *  = "\star"
 %format ~> = "\leadsto "
 %format k1
 %format k2
-%format Nat   = "\ensuremath{\mathbb{N}}"
-%format :<>:  = ":<\!>:"
-%format :$$:  = ":\!\$\$\!:"
-%format :<+>: = ":<\!\!\!\!+\!\!\!\!>:"
-
+%format p1
+%format p2
+%format p3
+%format a1
+%format a2
+%format a3
+%format b1
+%format b2
+%format b3
+%format f1
+%format f2
+%format f3
+%format Nat   = "\mathbb{N}"
+%format :<>:  = "<\!>"
+%format :$$:  = "~\$\$"
+%format <$$>  = "<\!\!\$\$\!\!>"
+%format <??>  = "<??\!\!>"
+%format <.>  = "<\!.\!>"
+%format :<+>: = "<\!\!\!\!+\!\!\!\!>"
+%format :/~:  = "\nsim"
+%format :=>:  = "\Rightarrow"
 
 %endif

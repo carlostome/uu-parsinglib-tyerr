@@ -44,7 +44,11 @@ type family HSep a where
 type family Indent (n :: Nat) (e :: ErrorMessage) where
   Indent 0 x = x
   Indent n x = Empty :<+>: Indent (n - 1) x
+\end{code}
 
+
+\label{functiontype}
+\begin{code}
 type FunctionType (arg :: Nat) (f :: Symbol) (n :: Nat) =
   VCat ![ Text "Expected as #" :<>: ShowType arg :<+>:
           Text "argument a function type of" :<+>: ShowType n :<+>:

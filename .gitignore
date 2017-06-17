@@ -34,6 +34,9 @@ cabal.project.local
 *.fot
 *.cb
 *.cb2
+doc/doc.tex
+doc/doc.ptb
+doc/doc.pdf
 
 ## Intermediate documents:
 *.dvi

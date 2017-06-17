@@ -1,6 +1,6 @@
 .PHONY: doc clean
 
-doc:
+doc: lhs2TeX/custom.fmt
 	LHS2TEX=lhs2TeX lhs2TeX doc/doc.lhs > doc/doc.tex
 	latexmk -pdf -outdir=doc -jobname=doc doc/doc.tex
 
