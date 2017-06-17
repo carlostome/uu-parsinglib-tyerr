@@ -1,4 +1,4 @@
-%if newcode
+%if style == newcode
 \begin{code}
 {-# LANGUAGE DataKinds            #-}
 {-# LANGUAGE KindSignatures       #-}

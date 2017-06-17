@@ -1,0 +1,24 @@
+%include polycode.fmt
+
+%if style == newcode
+
+%format !   = "''"
+%format !:      = "'':"
+%format nil = "''" []
+
+%else
+
+%format !      = " "
+%format !:     = ":"
+%format nil    = "[]"
+%format *  = "\star"
+%format ~> = "\leadsto "
+%format k1
+%format k2
+%format Nat   = "\ensuremath{\mathbb{N}}"
+%format :<>:  = ":<\!>:"
+%format :$$:  = ":\!\$\$\!:"
+%format :<+>: = ":<\!\!\!\!+\!\!\!\!>:"
+
+
+%endif
