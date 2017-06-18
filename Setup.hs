@@ -28,7 +28,10 @@ pplhs2TeX build local =
      (Just hin, Just hout, _, _) <- createProcess (proc "lhs2TeX" ["--newcode"])
                                                      { std_in  = CreatePipe
                                                      , std_out = CreatePipe }
-     hPutStr hin (header ++ source)
+     hPutStr hin header
+     notice verbosity ("dumped file " ++ lhs2TeXcustom ++ " in " ++ outFile)
+     hPutStr hin source
+     notice verbosity ("dumped file " ++ inFile ++ " in " ++ outFile)
      target <- hGetContents hout
      notice verbosity "done"
      writeFile outFile target

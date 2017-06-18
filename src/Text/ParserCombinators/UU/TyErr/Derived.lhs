@@ -48,9 +48,9 @@ As a warm up example were we can exploit the customization of type errors we
 have the following combinator:
 
 %if style /= newcode
-
-> pEither :: IsParser p => p a -> p b -> p (Either a b)
-
+\begin{code}
+pEither :: IsParser p => p a -> p b -> p (Either a b)
+\end{code}
 %endif
 
 In this case, we can use the fact that we know that the parser of the first
@@ -58,7 +58,6 @@ argument has to be the same as the second one and if this is not the case
 we are able to customize the error message. We can encode this as:
 
 \begin{code}
-
 pEither :: CustomErrors
   ![  ![ p1 :/~: p  :=>: VCat  ![Text "The parsers of the arguments for the function" :<+>:
                                  Quote (Text "pEither") :<+>: Text "do not coincide:"
@@ -67,7 +66,6 @@ pEither :: CustomErrors
   ,   ![Check (IsParser p)]
    ]  =>  p1 a -> p b -> p (Either a b)
 pEither = Derived.pEither
-
 \end{code}
 
 Another interesting case for error customization is when an arrow type is
@@ -75,10 +73,9 @@ expected as an argument and some other argument's type has a
 relation with it. In the combinator with type:
 
 %if style /= newcode
-
-% -- | `<$$>` is the version of `<$>` which flips the function argument
-> (<$$>) ::  IsParser p => (a -> b -> c) -> p b -> p (a -> c)
-
+\begin{code}
+(<$$>) ::  IsParser p => (a -> b -> c) -> p b -> p (a -> c)
+\end{code}
 %endif
 
 First, we can see that the first argument is expected to be a function with at
@@ -258,54 +255,54 @@ pList1_ng  = Derived.pList1_ng
 \end{code}
 %endif
 
-%
-% -- -- * Recognising list structures with separators
-%
-% -- pFoldrSep    ::  IsParser p => (v -> b -> b, b) -> p a -> p v -> p b
-% -- pFoldrSep      alg@(op,e) sep p =  must_be_non_empties "pFoldrSep" sep   p
-% --                                    (op <$> p <*> pFoldr    alg sepp `opt` e)
-% --                                    where sepp = sep *> p
-% -- pFoldrSep_ng ::  IsParser p => (v -> b -> b, b) -> p a -> p v -> p b
-% -- pFoldrSep_ng   alg@(op,e) sep p =  must_be_non_empties "pFoldrSep" sep   p
-% --                                    (op <$> p <*> pFoldr_ng alg sepp <|>  pure e)
-% --                                    where sepp = sep *> p
-%
-% -- pFoldr1Sep    ::   IsParser p => (a -> b -> b, b) -> p a1 ->p a -> p b
-% -- pFoldr1Sep     alg@(op,e) sep p =  must_be_non_empties "pFoldr1Sep"    sep   p pfm
-% --                                    where pfm = op <$> p <*> pFoldr    alg (sep *> p)
-% -- pFoldr1Sep_ng ::   IsParser p => (a -> b -> b, b) -> p a1 ->p a -> p b
-% -- pFoldr1Sep_ng  alg@(op,e) sep p =  must_be_non_empties "pFoldr1Sep_ng" sep   p pfm
-% --                                    where pfm = op <$> p <*> pFoldr_ng alg (sep *> p)
-%
-% -- pListSep    :: IsParser p => p a1 -> p a -> p [a]
-% -- pListSep      sep p = must_be_non_empties "pListSep"    sep   p (pFoldrSep     list_alg sep p)
-% -- pListSep_ng :: IsParser p => p a1 -> p a -> p [a]
-% -- pListSep_ng   sep p = must_be_non_empties "pListSep_ng" sep   p pFoldrSep_ng  list_alg sep p
-%
-% -- pList1Sep    :: IsParser p => p a1 -> p a -> p [a]
-% -- pList1Sep     s p =  must_be_non_empties "pListSep"    s   p (pFoldr1Sep    list_alg s p)
-% -- pList1Sep_ng :: IsParser p => p a1 -> p a -> p [a]
-% -- pList1Sep_ng  s p =  must_be_non_empties "pListSep_ng" s   p (pFoldr1Sep_ng list_alg s p)
-%
-% -- -- * Combinators for chained structures
-% -- -- ** Treating the operator as right associative
-% -- pChainr    :: IsParser p => p (c -> c -> c) -> p c -> p c
-% -- pChainr    op x    =   must_be_non_empties "pChainr"    op   x r where r = x <??> (flip <$> op <*> r)
-% -- pChainr_ng :: IsParser p => p (c -> c -> c) -> p c -> p c
-% -- pChainr_ng op x    =   must_be_non_empties "pChainr_ng" op   x r where r = x <**> ((flip <$> op <*> r)  <|> pure id)
-%
-% -- -- ** Treating the operator as left associative
-% -- pChainl    :: IsParser p => p (c -> c -> c) -> p c -> p c
-% -- pChainl   op x    =  must_be_non_empties "pChainl"    op   x (f <$> x <*> pList (flip <$> op <*> x))
-% --                     where  f x [] = x
-% --                            f x (func:rest) = f (func x) rest
-% -- pChainl_ng :: IsParser p => p (c -> c -> c) -> p c -> p c
-% -- pChainl_ng op x    = must_be_non_empties "pChainl_ng" op   x (f <$> x <*> pList_ng (flip <$> op <*> x))
-% --                      where f x [] = x
-% --                            f x (func:rest) = f (func x) rest
-%
-% -- -- * Repeating parsers
-%
+%%
+%% -- -- * Recognising list structures with separators
+%%
+%% -- pFoldrSep    ::  IsParser p => (v -> b -> b, b) -> p a -> p v -> p b
+%% -- pFoldrSep      alg@(op,e) sep p =  must_be_non_empties "pFoldrSep" sep   p
+%% --                                    (op <$> p <*> pFoldr    alg sepp `opt` e)
+%% --                                    where sepp = sep *> p
+%% -- pFoldrSep_ng ::  IsParser p => (v -> b -> b, b) -> p a -> p v -> p b
+%% -- pFoldrSep_ng   alg@(op,e) sep p =  must_be_non_empties "pFoldrSep" sep   p
+%% --                                    (op <$> p <*> pFoldr_ng alg sepp <|>  pure e)
+%% --                                    where sepp = sep *> p
+%%
+%% -- pFoldr1Sep    ::   IsParser p => (a -> b -> b, b) -> p a1 ->p a -> p b
+%% -- pFoldr1Sep     alg@(op,e) sep p =  must_be_non_empties "pFoldr1Sep"    sep   p pfm
+%% --                                    where pfm = op <$> p <*> pFoldr    alg (sep *> p)
+%% -- pFoldr1Sep_ng ::   IsParser p => (a -> b -> b, b) -> p a1 ->p a -> p b
+%% -- pFoldr1Sep_ng  alg@(op,e) sep p =  must_be_non_empties "pFoldr1Sep_ng" sep   p pfm
+%% --                                    where pfm = op <$> p <*> pFoldr_ng alg (sep *> p)
+%%
+%% -- pListSep    :: IsParser p => p a1 -> p a -> p [a]
+%% -- pListSep      sep p = must_be_non_empties "pListSep"    sep   p (pFoldrSep     list_alg sep p)
+%% -- pListSep_ng :: IsParser p => p a1 -> p a -> p [a]
+%% -- pListSep_ng   sep p = must_be_non_empties "pListSep_ng" sep   p pFoldrSep_ng  list_alg sep p
+%%
+%% -- pList1Sep    :: IsParser p => p a1 -> p a -> p [a]
+%% -- pList1Sep     s p =  must_be_non_empties "pListSep"    s   p (pFoldr1Sep    list_alg s p)
+%% -- pList1Sep_ng :: IsParser p => p a1 -> p a -> p [a]
+%% -- pList1Sep_ng  s p =  must_be_non_empties "pListSep_ng" s   p (pFoldr1Sep_ng list_alg s p)
+%%
+%% -- -- * Combinators for chained structures
+%% -- -- ** Treating the operator as right associative
+%% -- pChainr    :: IsParser p => p (c -> c -> c) -> p c -> p c
+%% -- pChainr    op x    =   must_be_non_empties "pChainr"    op   x r where r = x <??> (flip <$> op <*> r)
+%% -- pChainr_ng :: IsParser p => p (c -> c -> c) -> p c -> p c
+%% -- pChainr_ng op x    =   must_be_non_empties "pChainr_ng" op   x r where r = x <**> ((flip <$> op <*> r)  <|> pure id)
+%%
+%% -- -- ** Treating the operator as left associative
+%% -- pChainl    :: IsParser p => p (c -> c -> c) -> p c -> p c
+%% -- pChainl   op x    =  must_be_non_empties "pChainl"    op   x (f <$> x <*> pList (flip <$> op <*> x))
+%% --                     where  f x [] = x
+%% --                            f x (func:rest) = f (func x) rest
+%% -- pChainl_ng :: IsParser p => p (c -> c -> c) -> p c -> p c
+%% -- pChainl_ng op x    = must_be_non_empties "pChainl_ng" op   x (f <$> x <*> pList_ng (flip <$> op <*> x))
+%% --                      where f x [] = x
+%% --                            f x (func:rest) = f (func x) rest
+%%
+%% -- -- * Repeating parsers
+%%
 
 There are some combinators that share a common pattern for repeatedly applying a 
 given parser a fixed number of times. These are,
@@ -331,14 +328,14 @@ level machinery.
 \begin{code}
 type Repeating (name :: Symbol) = forall int fa f a.
   CustomErrors
-    ![ ![ int  :/~: Int   :=>:
+    ![ ![ int :/~: Int  :=>:
             VCat  ![Text "The 1st argument to" :<+>: Quote (ShowType name) :<+>:
                       Text "must be the number of elements to be recognised."
                   ^^,Text "Maybe the arguments are swapped?" ]
-        , fa   :/~: f a   :=>:
-            VCat  ![Text "The 2nd argument to" :<+>: Quote (ShowType name) :<+>:
-                       Text "is the parser to apply."
-                  ^^,Text "Maybe the arguments are swapped?" ]]
+        , fa :/~: f a   :=?>:
+            !( ![fa ~ Int :=!>: Text "The 2nd argument is an Int, Maybe the arguments are swapped?"]
+             ,  Text "The 2nd argument to" :<+>: Quote (ShowType name) :<+>:
+                Text "has to be the parser to apply.")]
       , ![ Check (IsParser f) ]
       ] => int -> fa -> f [a]
 \end{code}
@@ -360,12 +357,10 @@ pAtMost = Derived.pAtMost
 
 %
 % -- pBetween :: (IsParser f) => Int -> Int -> f a -> f [a]
-% -- pBetween m n p |  n < 0 || m <0 =  error "negative arguments to pBwteeen"
-% --                |  m > n         =  empty
-% --                |  otherwise     =  (++) <$> pExact m p <*> pAtMost (n-m) p
-%
+% -- pBetween = Derived.pBetween
 
-% Boring cases
+% Uninteresting cases.
+
 %if style == newcode
 \begin{code}
 pCount :: (IsParser p, Num b) => p a -> p b
@@ -375,8 +370,3 @@ pAny :: IsParser p => (a -> p a1) -> [a] -> p a1
 pAny  = Derived.pAny
 \end{code}
 %endif
-
-% --------------------------------------------------------------------------------
-%   -- Custom Type Errors tailored for Parser
-%
-

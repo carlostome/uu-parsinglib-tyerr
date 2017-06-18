@@ -88,22 +88,23 @@ import GHC.TypeErrors.PP
 % --   mplus = (<|>)
  
 
-The module we are working on defines in |class (Alternative p) => ExtAlternative p|
-a set of combinators useful for combining parsers. We have two options to
-customize such combinators with domain specific errors. We could construct
-something like |class (ExtAlternative p) => ExtAlternativeTyErr p| with exactly
-the same methods as |ExtAlternative| but with custom error messages, or instead
-not introduce a new class but just define new method with the same identifier
-and the custom error messages.
+% The module we are working on defines in |class (Alternative p) => ExtAlternative p|
+% a set of combinators useful for combining parsers. We have two options to
+% customize such combinators with domain specific errors. We could construct
+% something like |class (ExtAlternative p) => ExtAlternativeTyErr p| with exactly
+% the same methods as |ExtAlternative| but with custom error messages, or instead
+% not introduce a new class but just define new method with the same identifier
+% and the custom error messages.
 
-\begin{code}
-(<<|>) :: ExtAlternative p => p a -> p a -> p a
-(<<|>) = (Core.<<|>)
+% \begin{code}
+% (<<|>) :: ExtAlternative p => p a -> p a -> p a
+% (<<|>) = (Core.<<|>)
 
-(<?>)  :: ExtAlternative p => p a -> String -> p a
-(<?>) = (Core.<?>)
+% (<?>)  :: ExtAlternative p => p a -> String -> p a
+% (<?>) = (Core.<?>)
 
-\end{code}
+% \end{code}
+
 % -- class (Alternative p) => ExtAlternative p where
 % --    -- | `<<|>` is the greedy version of `<|>`. If its left hand side parser can
 % --    --   make any progress then it commits to that alternative. Can be used to make

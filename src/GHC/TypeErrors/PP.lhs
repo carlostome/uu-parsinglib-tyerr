@@ -30,6 +30,7 @@ type Dot   = Text "."
 type Comma = Text ","
 type Quote n = Text "'" :<>: n :<>: Text "`"
 
+
 type family (:<+>:) (a :: ErrorMessage) (b :: ErrorMessage) where
   a :<+>: b = a :<>: Space :<>: b
 

@@ -38,5 +38,4 @@ type family MakeParserArg p where
 data MakeParserArgSym :: ((k , Nat) ~> ErrorMessage) -> *
 
 type instance Apply MakeParserArgSym x = MakeParserArg x
-
 \end{code}
