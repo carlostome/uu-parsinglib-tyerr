@@ -53,6 +53,7 @@ library
                       Text.ParserCombinators.UU.TyErr
   -- Modules included in this library but not exported.
   other-modules:      GHC.TypeErrors.Utils
+                      GHC.TypeErrors.PP
 
   -- LANGUAGE extensions used by modules in this package.
   -- other-extensions:

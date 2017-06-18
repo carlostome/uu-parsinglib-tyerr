@@ -15,16 +15,15 @@
               PolyKinds,
               ConstraintKinds #-}
 
-
 module Text.ParserCombinators.UU.TyErr.Derived where
 
 import qualified Text.ParserCombinators.UU.Derived as Derived
-import qualified Text.ParserCombinators.UU.Core    as Core
-import Text.ParserCombinators.UU.Core (IsParser, Alternative(..))
+import           Text.ParserCombinators.UU.Core    (IsParser, Alternative(..))
 
-import GHC.TypeErrors
-import GHC.TypeLits
-import GHC.TypeErrors.Utils
+import           GHC.TypeErrors
+import           GHC.TypeLits
+import           GHC.TypeErrors.Utils
+import           GHC.TypeErrors.PP
 \end{code}
 %endif
 
@@ -381,18 +380,3 @@ pAny  = Derived.pAny
 %   -- Custom Type Errors tailored for Parser
 %
 
-\label{differentparsers}
-\begin{code}
-type family DifferentParsers (f :: Symbol) (p :: [(k,Nat)]) where
-  DifferentParsers f p =
-    Text "The parsers of the arguments for" :<+>: Text f :<+>: Text "do not coincide:" :$$:
-      Indent 4 (VCat (Map MakeParserArgSym p))
-
-type family MakeParserArg p where
-  MakeParserArg !(p,n) = Text "The parser of the #" :<>: ShowType n :<+>:
-                        Text "argument is" :<+>: ShowType p :<>: Dot
-
-data MakeParserArgSym :: ((k , Nat) ~> ErrorMessage) -> *
-
-type instance Apply MakeParserArgSym x = MakeParserArg x
-\end{code}

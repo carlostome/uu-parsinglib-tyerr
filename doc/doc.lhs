@@ -1,6 +1,5 @@
-\documentclass{report}
+\documentclass{article}
 %include custom.fmt
-\usepackage[titletoc,title]{appendix}
 \usepackage{hyperref}
 \renewcommand{\hscodestyle}{\footnotesize}
 \usepackage{xargs}                    
@@ -17,15 +16,24 @@
 \title{Type error customization in uu-parsinglib\footnote{\url{https://hackage.haskell.org/package/uu-parsinglib}}}
 \maketitle
 \section{Introduction}
-In this document we describe the introduction of custom error messages for the
-;w
+
+
 \section{Text.ParserCombinators.UU.Derived}
+
 %include src/Text/ParserCombinators/UU/TyErr/Derived.lhs
+
+\section{Text.ParserCombinators.UU.Core}
+
+%include src/Text/ParserCombinators/UU/TyErr/Core.lhs
 
 \appendix
 
 \section{GHC.TypeErrors.Utils}
 
 %include src/GHC/TypeErrors/Utils.lhs
+
+\section{GHC.TypeErrors.PP}
+
+%include src/GHC/TypeErrors/PP.lhs
 
 \end{document}

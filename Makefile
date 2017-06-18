@@ -1,7 +1,14 @@
 .PHONY: doc clean
+SRC = \
+	src/Text/ParserCombinators/UU/TyErr/Core.lhs    \
+	src/Text/ParserCombinators/UU/TyErr/Derived.lhs \
+	src/GHC/TypeErrors/PP.lhs                       \
+	src/GHC/TypeErrors/Utils.lhs
 
-doc: lhs2TeX/custom.fmt
-	LHS2TEX=lhs2TeX lhs2TeX doc/doc.lhs > doc/doc.tex
+LHS2TEX_DIR = lhs2TeX
+
+doc: $(LHS2TEX_DIR)/custom.fmt $(SRC)
+	LHS2TEX=$(LHS2TEX_DIR) lhs2TeX doc/doc.lhs > doc/doc.tex
 	latexmk -pdf -outdir=doc -jobname=doc doc/doc.tex
 
 clean:

@@ -10,57 +10,33 @@ module GHC.TypeErrors.Utils where
 
 import           GHC.TypeErrors
 import           GHC.TypeLits
+import           GHC.TypeErrors.PP
 
 \end{code}
 %endif
 
-We begin by defining a set of basic combinators to build up our prettyprinting
-library.
-
-\begin{code}
-type Empty = Text ""
-type Space = Text " "
-type Colon = Text ":"
-type Dot   = Text "."
-type Comma = Text ","
-type Quote n = Text "'" :<>: n :<>: Text "`"
-
-type family (:<+>:) (a :: ErrorMessage) (b :: ErrorMessage) where
-  a :<+>: b = a :<>: Space :<>: b
-
-infixl 6 :<+>:
-type family VCat a where
-  VCat nil       = Empty
-  VCat (x !: xs) = x :$$: VCat xs
-
-type family HCat a where
-  HCat nil       = Empty
-  HCat (x !: xs) = x :<>: HCat xs
-
-type family HSep a where
-  HSep nil       = Empty
-  HSep (x !: xs) = x :<+>: HSep xs
-
-type family Indent (n :: Nat) (e :: ErrorMessage) where
-  Indent 0 x = x
-  Indent n x = Empty :<+>: Indent (n - 1) x
-\end{code}
-
+This module defines domain specific combinators for type error messages
+for the library.
 
 \label{functiontype}
 \begin{code}
 type FunctionType (arg :: Nat) f (n :: Nat) =
-  VCat ![ Text "Expected as #" :<>: ShowType arg :<+>:
-          Text "argument a function type of" :<+>: ShowType n :<+>:
-          Text "arguments but got" :<>: Colon
-        , Indent 4 (ShowType f) :<>: Dot ]
+  VCat  ![Text "Expected as #" :<>: ShowType arg :<+>:
+        ^^ Text "argument a function type of" :<+>: ShowType n :<+>:
+        ^^ Text "arguments but got" :<>: Colon
+        ^^,Indent 4 (ShowType f) :<>: Dot ]
 
-data (~>) :: * -> * -> *
+type family DifferentParsers (f :: Symbol) (p :: [(k,Nat)]) where
+  DifferentParsers f p =
+    Text "The parsers of the arguments for" :<+>: Text f :<+>: Text "do not coincide:" :$$:
+      Indent 4 (VCat (Map MakeParserArgSym p))
 
-type family Apply (f :: (k1 ~> k2) -> * ) (x :: k1) :: k2
+type family MakeParserArg p where
+  MakeParserArg !(p,n) = Text "The parser of the #" :<>: ShowType n :<+>:
+                         Text "argument is" :<+>: ShowType p :<>: Dot
 
-type family Map (f :: (k1 ~> k2) -> * ) (xs :: [k1]) :: [k2] where
-  Map f nil = nil
-  Map f (x !: xs) = Apply f x !: (Map f xs)
+data MakeParserArgSym :: ((k , Nat) ~> ErrorMessage) -> *
+
+type instance Apply MakeParserArgSym x = MakeParserArg x
 
 \end{code}
