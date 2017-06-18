@@ -1,7 +1,7 @@
 # uu-parsinglib-tyerr
 
 Wrapper arround
-[https://hackage.haskell.org/package/uu-parsinglib](uu-parsinglib) with
+[uu-parsinglib](https://hackage.haskell.org/package/uu-parsinglib) with
 customized type error messages.
 
 ## Build as a Haskell library
@@ -9,7 +9,7 @@ customized type error messages.
 In order to use it as a Haskell library is necessary to have installed the
 patch to GHC that makes the magic of custom error messages.
 
-It is neccesary to have [https://www.andres-loeh.de/lhs2tex/](lhs2TeX) somewhere
+It is neccesary to have (https://www.andres-loeh.de/lhs2tex/)[lhs2TeX] somewhere
 in the path as the `Setup.hs` file has been customized to preprocces the
 modules.
 
@@ -28,8 +28,8 @@ cabal build
 This library is engineered so it can be built as one big documentation file with
 all the modules and the latex comments they contain.
 
-This needs [https://www.andres-loeh.de/lhs2tex/](lhs2TeX) and
-[https://www.ctan.org/pkg/latexmk/](latexmk) to be built.
+This needs (https://www.andres-loeh.de/lhs2tex/)[lhs2TeX] and
+(https://www.ctan.org/pkg/latexmk/)[latexmk] to be built.
 
 If those are avaliable then just type:
 
