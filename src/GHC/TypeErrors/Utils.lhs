@@ -49,7 +49,7 @@ type family Indent (n :: Nat) (e :: ErrorMessage) where
 
 \label{functiontype}
 \begin{code}
-type FunctionType (arg :: Nat) (f :: Symbol) (n :: Nat) =
+type FunctionType (arg :: Nat) f (n :: Nat) =
   VCat ![ Text "Expected as #" :<>: ShowType arg :<+>:
           Text "argument a function type of" :<+>: ShowType n :<+>:
           Text "arguments but got" :<>: Colon

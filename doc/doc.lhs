@@ -1,6 +1,7 @@
-\documentclass{article}
+\documentclass{report}
 %include custom.fmt
 \usepackage[titletoc,title]{appendix}
+\usepackage{hyperref}
 \renewcommand{\hscodestyle}{\footnotesize}
 \usepackage{xargs}                    
 \usepackage[pdftex,dvipsnames]{xcolor}
@@ -12,7 +13,12 @@
 \newcommandx{\thiswillnotshow}[2][1=]{\todo[disable,#1]{#2}}
 
 \begin{document}
-
+\author{Carlos Tom\'e Corti\~nas}
+\title{Type error customization in uu-parsinglib\footnote{\url{https://hackage.haskell.org/package/uu-parsinglib}}}
+\maketitle
+\section{Introduction}
+In this document we describe the introduction of custom error messages for the
+;w
 \section{Text.ParserCombinators.UU.Derived}
 %include src/Text/ParserCombinators/UU/TyErr/Derived.lhs
 

@@ -52,6 +52,7 @@ module Text.ParserCombinators.UU.TyErr.Core
   ) where
 
 import Text.ParserCombinators.UU.Core
+
 -- import Control.Applicative
 -- import Control.Monad
 -- import Data.Char

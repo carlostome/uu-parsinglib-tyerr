@@ -12,7 +12,8 @@
               TypeOperators,
               TypeFamilies,
               AllowAmbiguousTypes,
-              PolyKinds #-}
+              PolyKinds,
+              ConstraintKinds #-}
 
 
 module Text.ParserCombinators.UU.TyErr.Derived where
@@ -123,7 +124,7 @@ As:
 
 \begin{code}
 (<??>) :: CustomErrors
-  ![ ![ DifferentParsers "<??>" ![ !(p1,1) , !(p,2)]]
+  ![ ![ (p1 :/~: p) :=>: DifferentParsers "<??>" ![ !(p1,1) , !(p,2)]]
    , ![ f :/~: (a -> a)  :=>:
           VCat  ![ Text "Expected the underlying type of the 2nd parser to be a function type"
                    :<+>: Text "of 1 argument, but got:"
@@ -144,15 +145,21 @@ Therefore, we can also abstract over this fact with the type level function
 |FunctionType (arg :: Nat) (f :: Symbol) (n :: Nat) :: ErrorMessage| defined in
 \todo{add reference}.
 
+The follwowing two combinators, show a similarity between their types. We can
+think that besides both parsers being the same parsers and the underlying types
+being functions of one argument, if the combination of source/target type of the
+functions does not match maybe the user pretended to use the other one.
+
 %if style /= newcode
 \begin{code}
-(<.>) :: IsParser p => p (b -> c) -> p (a -> b) -> p (a -> c)
+(<.>)  :: IsParser p => p (b -> c) -> p (a -> b) -> p (a -> c)
+(<..>) :: IsParser p => p (a -> b) -> p (b -> c) -> p (a -> c)
 \end{code}
 %endif
 
 \begin{code}
 (<.>) :: CustomErrors
-  ![ ![ DifferentParsers "<.>" ![ !(p, 1), !(p2 , 2) ]
+  ![ ![ p :/~: p2 :=>: DifferentParsers "<.>" ![ !(p, 1), !(p2 , 2) ]
       , f1 :/~: (b1 -> c)  :=>: FunctionType 1 f1 1
       , f2 :/~: (a -> b2)  :=>: FunctionType 2 f2 1]
    ,![ b1 :/~: b2          :=>:
@@ -160,39 +167,61 @@ Therefore, we can also abstract over this fact with the type level function
                 ^^,Indent 4 (ShowType b2)
                 ^^,Text "and the source type of the first one:"
                 ^^,Indent 4 (ShowType b1)
-                ^^,Text "should match." ]]
+                ^^,Text "should match."
+                ^^,Text "Maybe you wanted to use (<.>) instead?"]]
 
    , ![ Check (IsParser p) ]
    ] => p f1 -> p2 f2 -> p (a -> c)
 (<.>) = (Derived.<.>)
+
+(<..>) :: CustomErrors
+  ![ ![ p :/~: p2 :=>: DifferentParsers "<..>" ![ !(p, 1), !(p2 , 2) ]
+      , f2 :/~: (b1 -> c)  :=>: FunctionType 1 f1 1
+      , f1 :/~: (a -> b2)  :=>: FunctionType 2 f2 1]
+   ,![ b1 :/~: b2          :=>:
+          VCat  ![Text "The target type of the 2nd function:"
+                ^^,Indent 4 (ShowType b2)
+                ^^,Text "and the source type of the first one:"
+                ^^,Indent 4 (ShowType b1)
+                ^^,Text "should match."
+                ^^,Text "Maybe you wanted to use (<..>) instead?"]]
+
+   , ![ Check (IsParser p) ]
+   ] => p f1 -> p2 f2 -> p (a -> c)
+(<..>) = (Derived.<..>)
 \end{code}
 
-%
-% -- -- | `<..>` functional composition of two parsers with the arguments reversed
-% -- --
-% -- (<..>) :: IsParser p => p (a -> b) -> p (b -> c) -> p (a -> c)
-% -- g <..> f = (.) <$> f <*> g
-%
-%
-% -- infixl 4  <??>
-%
-% -- -- | `pMany` is equivalent to the `many` from "Control.Applicative". We want however all our parsers to start with a lower case @p@.
-% pMany :: IsParser p => p a -> p [a]
-% pMany = Derived.pMany
-%
-% -- -- | `pSome` is equivalent to the `some` from "Control.Applicative". We want however all our parsers to start with a lower case @p@.
-% pSome :: (IsParser f) => f a -> f [a]
-% pSome = Derived.pSome
-%
-%
-% -- -- | @`pPacked`@ surrounds its third parser with the first and the second one, returning only the middle result
-% -- pPacked :: IsParser p => p b1 -> p b2 -> p a -> p a
-% pPacked :: CustomErrors
-%   '[ '[ p  :/~: p1   :=>: DifferentParsers "pPacked" '[ '(p, 1), '(p1 , 2), '(p2, 3) ]
-%       , p1 :/~: p2   :=>: DifferentParsers "pPacked" '[ '(p, 1), '(p1 , 2), '(p2, 3) ]]
-%    , '[ Check (IsParser p) ]
-%    ] => p b1 -> p1 b2 -> p2 a -> p a
-% pPacked = Derived.pPacked
+% Boring combinators
+%if style == newcode
+\begin{code}
+infixl 4  <??>
+
+pMany :: IsParser p => p a -> p [a]
+pMany = Derived.pMany
+
+pSome :: (IsParser f) => f a -> f [a]
+pSome = Derived.pSome
+\end{code}
+%endif
+
+An interesting case of this pattern occurs when the numbers of parsers involved
+in the type of a combinator is greater than two. For example,
+
+%if style /= newcode
+\begin{code}
+pPacked :: IsParser p => p b1 -> p b2 -> p a -> p a
+\end{code}
+%endif
+
+\begin{code}
+pPacked :: CustomErrors
+  ![ ![ p  :/~: p1   :=>: DifferentParsers "pPacked" ![ !(p, 1), !(p1 , 2), !(p2, 3) ]
+      , p1 :/~: p2   :=>: DifferentParsers "pPacked" ![ !(p, 1), !(p1 , 2), !(p2, 3) ]]
+   , ![ Check (IsParser p) ]
+   ] => p b1 -> p1 b2 -> p2 a -> p a
+pPacked = Derived.pPacked
+\end{code}
+
 %
 % -- -- * Iterating combinators, all in a greedy (default) and a non-greedy (ending with @_ng@) variant
 %
@@ -216,15 +245,20 @@ Therefore, we can also abstract over this fact with the type level function
 % -- list_alg :: (a -> [a] -> [a], [a1])
 % -- list_alg = ((:), [])
 %
-% -- pList    ::    IsParser p => p a -> p [a]
-% -- pList         p =  must_be_non_empty "pList"    p (pFoldr        list_alg   p)
-% -- pList_ng ::    IsParser p => p a -> p [a]
-% -- pList_ng      p =  must_be_non_empty "pList_ng" p (pFoldr_ng     list_alg   p)
-%
-% -- pList1    ::  IsParser p =>  p a -> p [a]
-% -- pList1         p =  must_be_non_empty "pList"    p (pFoldr1       list_alg   p)
-% -- pList1_ng ::   IsParser p => p a -> p [a]
-% -- pList1_ng      p =  must_be_non_empty "pList_ng" p (pFoldr1_ng    list_alg   p)
+%if style == newcode
+\begin{code}
+pList    :: IsParser p => p a -> p [a]
+pList     = Derived.pList
+pList_ng :: IsParser p => p a -> p [a]
+pList_ng  = Derived.pList_ng
+
+pList1    :: IsParser p =>  p a -> p [a]
+pList1     = Derived.pList1
+pList1_ng :: IsParser p => p a -> p [a]
+pList1_ng  = Derived.pList1_ng
+\end{code}
+%endif
+
 %
 % -- -- * Recognising list structures with separators
 %
@@ -273,57 +307,92 @@ Therefore, we can also abstract over this fact with the type level function
 %
 % -- -- * Repeating parsers
 %
-% -- | `pExact` recognises a specified number of elements
-% pExact :: (IsParser f) => Int -> f a -> f [a]
-% -- pExact :: CustomErrors
-% --   '[ '[ int  :/~: Int   :=>:  Text "The first argument to pExact must be the number of elements to be recognised" :<>: Colon
-% --       , fa   :/~: f a   :=>:  Text "The second argument to pExact is the parser t:<+>: Text "doesn't seem to be a parser" ]
-%    -- , '[ Check (IsParser f) ]
-%    -- ] => int -> fa -> f [a]
-% pExact = Derived.pExact
+
+There are some combinators that share a common pattern for repeatedly applying a 
+given parser a fixed number of times. These are,
+
+%if style /= newcode
+\begin{code}
+pExact   :: (IsParser f) => Int -> f a -> f [a]
+pAtLeast :: (IsParser f) => Int -> f a -> f [a]
+pAtMost  :: (IsParser f) => Int -> f a -> f [a]
+\end{code}
+%endif
+
+The ideal custom error message for this situation would be to firs check
+whether the first argument is an |Int|. If this is not the case, maybe is of
+type parser |p a|.  The same could be done for the second argument but the
+other way around. However, in its current state we cannot conditionally check
+this situation. Therefore we will conform ourselves with a suggestion to the
+user that it may be the case that the arguments are swapped.
+
+In order to encode all the three cases together we will make use of some type
+level machinery.
+
+\begin{code}
+type Repeating (name :: Symbol) = forall int fa f a.
+  CustomErrors
+    ![ ![ int  :/~: Int   :=>:
+            VCat  ![Text "The 1st argument to" :<+>: Quote (ShowType name) :<+>:
+                      Text "must be the number of elements to be recognised."
+                  ^^,Text "Maybe the arguments are swapped?" ]
+        , fa   :/~: f a   :=>:
+            VCat  ![Text "The 2nd argument to" :<+>: Quote (ShowType name) :<+>:
+                       Text "is the parser to apply."
+                  ^^,Text "Maybe the arguments are swapped?" ]]
+      , ![ Check (IsParser f) ]
+      ] => int -> fa -> f [a]
+\end{code}
+
+And now we simply need to write the type signatures using |Repeating| with the
+appropiate type level |String| for the name of the function. Maybe this could
+be done more automatically by means of Template Haskell.
+
+\begin{code}
+pExact :: Repeating "pExact"
+pExact = Derived.pExact
+
+pAtLeast :: Repeating "pAtLeast"
+pAtLeast = Derived.pAtLeast
+
+pAtMost :: Repeating "pAtMost"
+pAtMost = Derived.pAtMost
+\end{code}
+
 %
 % -- pBetween :: (IsParser f) => Int -> Int -> f a -> f [a]
 % -- pBetween m n p |  n < 0 || m <0 =  error "negative arguments to pBwteeen"
 % --                |  m > n         =  empty
 % --                |  otherwise     =  (++) <$> pExact m p <*> pAtMost (n-m) p
 %
-% -- pAtLeast ::  (IsParser f) => Int -> f a -> f [a]
-% -- pAtLeast n p  = (++) <$> pExact n p <*> pList p
-%
-% -- pAtMost ::  (IsParser f) => Int -> f a -> f [a]
-% -- pAtMost n p | n > 0  = (:) <$> p <*> pAtMost (n-1) p `opt`  []
-% --             | n == 0 = pure []
-%
-% -- -- * Counting Parser
-% -- -- | Count the number of times @p@ has succeeded
-% -- pCount :: (IsParser p, Num b) => p a -> p b
-% -- pCount p = (\_ b -> b+1) <$> p <*> pCount p  `opt` 0
-%
-% -- -- * Miscelleneous
-% -- -- | Build a parser for each element in the argument list and try them all.
-% -- pAny :: IsParser p => (a -> p a1) -> [a] -> p a1
-% -- pAny  f l =  foldr (<|>) pFail (map f l)
-%
-% -- -- | pSym was removed because the class Provides was eliminated
-% -- -- pAnySym :: Provides st s s => [s] -> P st s
-% -- -- pAnySym = pAny pSym
-%
+
+% Boring cases
+%if style == newcode
+\begin{code}
+pCount :: (IsParser p, Num b) => p a -> p b
+pCount = Derived.pCount
+
+pAny :: IsParser p => (a -> p a1) -> [a] -> p a1
+pAny  = Derived.pAny
+\end{code}
+%endif
+
 % --------------------------------------------------------------------------------
 %   -- Custom Type Errors tailored for Parser
 %
 
 \label{differentparsers}
 \begin{code}
- type family DifferentParsers (f :: Symbol) (p :: [(k,Nat)]) where
-   DifferentParsers f p =
-     Text "The parsers of the arguments for" :<+>: Text f :<+>: Text "do not coincide:" :$$:
-       Indent 4 (VCat (Map MakeParserArgSym p))
+type family DifferentParsers (f :: Symbol) (p :: [(k,Nat)]) where
+  DifferentParsers f p =
+    Text "The parsers of the arguments for" :<+>: Text f :<+>: Text "do not coincide:" :$$:
+      Indent 4 (VCat (Map MakeParserArgSym p))
 
- type family MakeParserArg p where
-   MakeParserArg !(p,n) = Text "The parser of the #" :<>: ShowType n :<+>:
-                          Text "argument is" :<+>: ShowType p :<>: Colon
+type family MakeParserArg p where
+  MakeParserArg !(p,n) = Text "The parser of the #" :<>: ShowType n :<+>:
+                        Text "argument is" :<+>: ShowType p :<>: Dot
 
- data MakeParserArgSym :: ((k , Nat) ~> ErrorMessage) -> *
+data MakeParserArgSym :: ((k , Nat) ~> ErrorMessage) -> *
 
- type instance Apply MakeParserArgSym x = MakeParserArg x
+type instance Apply MakeParserArgSym x = MakeParserArg x
 \end{code}
