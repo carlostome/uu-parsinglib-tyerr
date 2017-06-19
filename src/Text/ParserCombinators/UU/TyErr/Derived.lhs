@@ -138,7 +138,7 @@ As:
 
 We should also note that the case where a parser is wrapping an arrow type.
 Therefore, we can also abstract over this fact with the type level function
-|FunctionType (arg :: Nat) (f :: Symbol) (n :: Nat) :: ErrorMessage| defined in
+|FunctionTypeParser (arg :: Nat) (f :: Symbol) (n :: Nat) :: ErrorMessage| defined in
 \todo{add reference}.
 
 The follwowing two combinators, show a similarity between their types. We can
@@ -156,8 +156,8 @@ functions does not match maybe the user pretended to use the other one.
 \begin{code}
 (<.>) :: CustomErrors
   ![ ![ p :/~: p2 :=>: DifferentParsers "<.>" ![ !(p, 1), !(p2 , 2) ]
-      , f1 :/~: (b1 -> c)  :=>: FunctionType 1 f1 1
-      , f2 :/~: (a -> b2)  :=>: FunctionType 2 f2 1]
+      , f1 :/~: (b1 -> c)  :=>: FunctionTypeParser 1 f1 1
+      , f2 :/~: (a -> b2)  :=>: FunctionTypeParser 2 f2 1]
    ,![ b1 :/~: b2          :=>:
           VCat  ![Text "The target type of the 2nd function:"
                 ^^,Indent 4 (ShowType b2)
@@ -172,8 +172,8 @@ functions does not match maybe the user pretended to use the other one.
 
 (<..>) :: CustomErrors
   ![ ![ p :/~: p2 :=>: DifferentParsers "<..>" ![ !(p, 1), !(p2 , 2) ]
-      , f2 :/~: (b1 -> c)  :=>: FunctionType 1 f1 1
-      , f1 :/~: (a -> b2)  :=>: FunctionType 2 f2 1]
+      , f2 :/~: (b1 -> c)  :=>: FunctionTypeParser 1 f1 1
+      , f1 :/~: (a -> b2)  :=>: FunctionTypeParser 2 f2 1]
    ,![ b1 :/~: b2          :=>:
           VCat  ![Text "The target type of the 2nd function:"
                 ^^,Indent 4 (ShowType b2)
@@ -218,33 +218,26 @@ pPacked :: CustomErrors
 pPacked = Derived.pPacked
 \end{code}
 
-%
-% -- -- * Iterating combinators, all in a greedy (default) and a non-greedy (ending with @_ng@) variant
-%
-% -- -- ** Recognising  list like structures
-% -- pFoldr    :: IsParser p => (a -> a1 -> a1, a1) -> p a -> p a1
-% -- pFoldr         alg@(op,e)     p =  must_be_non_empty "pFoldr" p pfm
-% --                                    where pfm = (op <$> p <*> pfm) `opt` e
-%
-% -- pFoldr_ng ::  IsParser p => (a -> a1 -> a1, a1) -> p a -> p a1
-% -- pFoldr_ng      alg@(op,e)     p =  must_be_non_empty "pFoldr_ng" p pfm
-% --                                    where pfm = (op <$> p <*> pfm)  <|> pure e
-%
-%
-% -- pFoldr1    :: IsParser p => (v -> b -> b, b) -> p v -> p b
-% -- pFoldr1        alg@(op,e)     p =  must_be_non_empty "pFoldr1"    p (op <$> p <*> pFoldr     alg p)
-%
-% -- pFoldr1_ng ::  IsParser p => (v -> b -> b, b) -> p v -> p b
-% -- pFoldr1_ng     alg@(op,e)     p =  must_be_non_empty "pFoldr1_ng" p (op <$> p <*> pFoldr_ng  alg p)
-%
-%
-% -- list_alg :: (a -> [a] -> [a], [a1])
-% -- list_alg = ((:), [])
-%
+\begin{code}
+pFoldr    :: IsParser p => (a -> a1 -> a1, a1) -> p a -> p a1
+pFoldr = Derived.pFoldr
+
+pFoldr_ng ::  IsParser p => (a -> a1 -> a1, a1) -> p a -> p a1
+pFoldr_ng = Derived.pFoldr_ng
+
+
+pFoldr1    :: IsParser p => (v -> b -> b, b) -> p v -> p b
+pFoldr1 = Derived.pFoldr1
+
+pFoldr1_ng ::  IsParser p => (v -> b -> b, b) -> p v -> p b
+pFoldr1_ng = Derived.pFoldr1_ng
+\end{code}
+
 %if style == newcode
 \begin{code}
 pList    :: IsParser p => p a -> p [a]
 pList     = Derived.pList
+
 pList_ng :: IsParser p => p a -> p [a]
 pList_ng  = Derived.pList_ng
 
@@ -255,54 +248,57 @@ pList1_ng  = Derived.pList1_ng
 \end{code}
 %endif
 
-%%
-%% -- -- * Recognising list structures with separators
-%%
-%% -- pFoldrSep    ::  IsParser p => (v -> b -> b, b) -> p a -> p v -> p b
-%% -- pFoldrSep      alg@(op,e) sep p =  must_be_non_empties "pFoldrSep" sep   p
-%% --                                    (op <$> p <*> pFoldr    alg sepp `opt` e)
-%% --                                    where sepp = sep *> p
-%% -- pFoldrSep_ng ::  IsParser p => (v -> b -> b, b) -> p a -> p v -> p b
-%% -- pFoldrSep_ng   alg@(op,e) sep p =  must_be_non_empties "pFoldrSep" sep   p
-%% --                                    (op <$> p <*> pFoldr_ng alg sepp <|>  pure e)
-%% --                                    where sepp = sep *> p
-%%
-%% -- pFoldr1Sep    ::   IsParser p => (a -> b -> b, b) -> p a1 ->p a -> p b
-%% -- pFoldr1Sep     alg@(op,e) sep p =  must_be_non_empties "pFoldr1Sep"    sep   p pfm
-%% --                                    where pfm = op <$> p <*> pFoldr    alg (sep *> p)
-%% -- pFoldr1Sep_ng ::   IsParser p => (a -> b -> b, b) -> p a1 ->p a -> p b
-%% -- pFoldr1Sep_ng  alg@(op,e) sep p =  must_be_non_empties "pFoldr1Sep_ng" sep   p pfm
-%% --                                    where pfm = op <$> p <*> pFoldr_ng alg (sep *> p)
-%%
-%% -- pListSep    :: IsParser p => p a1 -> p a -> p [a]
-%% -- pListSep      sep p = must_be_non_empties "pListSep"    sep   p (pFoldrSep     list_alg sep p)
-%% -- pListSep_ng :: IsParser p => p a1 -> p a -> p [a]
-%% -- pListSep_ng   sep p = must_be_non_empties "pListSep_ng" sep   p pFoldrSep_ng  list_alg sep p
-%%
-%% -- pList1Sep    :: IsParser p => p a1 -> p a -> p [a]
-%% -- pList1Sep     s p =  must_be_non_empties "pListSep"    s   p (pFoldr1Sep    list_alg s p)
-%% -- pList1Sep_ng :: IsParser p => p a1 -> p a -> p [a]
-%% -- pList1Sep_ng  s p =  must_be_non_empties "pListSep_ng" s   p (pFoldr1Sep_ng list_alg s p)
-%%
-%% -- -- * Combinators for chained structures
-%% -- -- ** Treating the operator as right associative
-%% -- pChainr    :: IsParser p => p (c -> c -> c) -> p c -> p c
-%% -- pChainr    op x    =   must_be_non_empties "pChainr"    op   x r where r = x <??> (flip <$> op <*> r)
-%% -- pChainr_ng :: IsParser p => p (c -> c -> c) -> p c -> p c
-%% -- pChainr_ng op x    =   must_be_non_empties "pChainr_ng" op   x r where r = x <**> ((flip <$> op <*> r)  <|> pure id)
-%%
-%% -- -- ** Treating the operator as left associative
-%% -- pChainl    :: IsParser p => p (c -> c -> c) -> p c -> p c
-%% -- pChainl   op x    =  must_be_non_empties "pChainl"    op   x (f <$> x <*> pList (flip <$> op <*> x))
-%% --                     where  f x [] = x
-%% --                            f x (func:rest) = f (func x) rest
-%% -- pChainl_ng :: IsParser p => p (c -> c -> c) -> p c -> p c
-%% -- pChainl_ng op x    = must_be_non_empties "pChainl_ng" op   x (f <$> x <*> pList_ng (flip <$> op <*> x))
-%% --                      where f x [] = x
-%% --                            f x (func:rest) = f (func x) rest
-%%
-%% -- -- * Repeating parsers
-%%
+\begin{code}
+pFoldrSep    ::  IsParser p => (v -> b -> b, b) -> p a -> p v -> p b
+pFoldrSep = Derived.pFoldrSep
+
+pFoldrSep_ng ::  IsParser p => (v -> b -> b, b) -> p a -> p v -> p b
+pFoldrSep_ng = Derived.pFoldrSep_ng
+
+pFoldr1Sep    ::   IsParser p => (a -> b -> b, b) -> p a1 ->p a -> p b
+pFoldr1Sep = Derived.pFoldr1Sep
+
+pFoldr1Sep_ng ::   IsParser p => (a -> b -> b, b) -> p a1 ->p a -> p b
+pFoldr1Sep_ng = Derived.pFoldr1Sep_ng
+
+type PListSep (name :: Symbol) = forall p p1 a a1.
+  CustomErrors
+    ![ ![ p  :/~: p1   :=>: DifferentParsers name ![ !(p, 1), !(p1 , 2)]]
+     , ![ Check (IsParser p) ]
+     ] => p a1 -> p1 a -> p [a]
+
+pListSep     :: PListSep "pListSep"
+pListSep     = Derived.pListSep
+
+pListSep_ng  :: PListSep "pListSep_ng"
+pListSep_ng  = Derived.pListSep_ng
+
+pList1Sep    :: PListSep "pList1Sep"
+pList1Sep    = Derived.pList1Sep
+
+pList1Sep_ng :: PListSep "pList1Sep_ng"
+pList1Sep_ng = Derived.pList1Sep_ng
+
+type PChain (name :: Symbol) = forall p p1 fc c1 c.
+  CustomErrors
+    ![ ![ p  :/~: p1  :=>: DifferentParsers name ![ !(p, 1), !(p1 , 2)]
+        , fc :/~: (c1 -> c1 -> c1) :=>: FunctionTypeParser 1 fc 2 ]
+     , ![ c1 :/~: c :=>: Text "Dummy" ]
+     , ![ Check (IsParser p) ]
+     ] => p fc -> p1 c -> p c
+
+pChainr :: PChain "pChainr"
+pChainr = Derived.pChainr
+
+pChainr_ng :: PChain "pChainr_ng"
+pChainr_ng = Derived.pChainr_ng
+
+pChainl :: PChain "pChainl"
+pChainl = Derived.pChainl
+
+pChainl_ng :: PChain "pChainl_ng"
+pChainl_ng = Derived.pChainl_ng
+\end{code}
 
 There are some combinators that share a common pattern for repeatedly applying a 
 given parser a fixed number of times. These are,
@@ -326,18 +322,18 @@ In order to encode all the three cases together we will make use of some type
 level machinery.
 
 \begin{code}
-type Repeating (name :: Symbol) = forall int fa f a.
+type Repeating (name :: Symbol) = forall int pa p a.
   CustomErrors
-    ![ ![ int :/~: Int  :=>:
-            VCat  ![Text "The 1st argument to" :<+>: Quote (ShowType name) :<+>:
-                      Text "must be the number of elements to be recognised."
-                  ^^,Text "Maybe the arguments are swapped?" ]
-        , fa :/~: f a   :=?>:
-            !( ![fa ~ Int :=!>: Text "The 2nd argument is an Int, Maybe the arguments are swapped?"]
+    ![ ![ int :/~: Int  :=?>:
+            !( ![int ~ pa :=!>: Text "The 2nd argument is an Int, Maybe the arguments are swapped?"]
+             ,  Text "The 2nd argument to" :<+>: Quote (ShowType name) :<+>:
+                Text "has to be the parser to apply.")
+        , pa :/~: p a   :=?>:
+            !( ![pa ~ Int :=!>: Text "The 2nd argument is an Int, Maybe the arguments are swapped?"]
              ,  Text "The 2nd argument to" :<+>: Quote (ShowType name) :<+>:
                 Text "has to be the parser to apply.")]
-      , ![ Check (IsParser f) ]
-      ] => int -> fa -> f [a]
+      , ![ Check (IsParser p) ]
+      ] => int -> pa -> p [a]
 \end{code}
 
 And now we simply need to write the type signatures using |Repeating| with the
@@ -345,19 +341,47 @@ appropiate type level |String| for the name of the function. Maybe this could
 be done more automatically by means of Template Haskell.
 
 \begin{code}
-pExact :: Repeating "pExact"
-pExact = Derived.pExact
+pExact   :: Repeating "pExact"
+pExact   = Derived.pExact
 
 pAtLeast :: Repeating "pAtLeast"
 pAtLeast = Derived.pAtLeast
 
-pAtMost :: Repeating "pAtMost"
-pAtMost = Derived.pAtMost
+pAtMost  :: Repeating "pAtMost"
+pAtMost  = Derived.pAtMost
 \end{code}
 
-%
-% -- pBetween :: (IsParser f) => Int -> Int -> f a -> f [a]
-% -- pBetween = Derived.pBetween
+\todo{if not solved talk about the error message}
+
+We can even scalate the pattern of advising for a wrong argument order situation
+to functions that receive more than one |Int| as paramter. For example the following
+combinator,
+%if style /= newcode
+\begin{code}
+pBetween :: (IsParser f) => Int -> Int -> f a -> f [a]
+\end{code}
+%endif
+
+gets the following customized error message,
+
+\begin{code}
+pBetween ::
+  CustomErrors
+    ![ ![ int1 :/~: Int  :=>:
+            VCat  ![Text "The 1st argument to pBetween must be the minimum number of elements (Int) to be recognised."
+                  ^^,Indent 4 (Text "The actual type is:" :<+>: ShowType int1)
+                  ^^,Text "Maybe the order of arguments is wrong?" ]
+        ,  int2 :/~: Int  :=>:
+            VCat  ![Text "The 2st argument to pBetween must be the maximum number of elements (Int) to be recognised."
+                  ^^,Indent 4 (Text "The actual type is:" :<+>: ShowType int2)
+                  ^^,Text "Maybe the order of arguments is wrong?" ]
+        , fa :/~: f a   :=?>:
+            !( ![fa ~ Int :=!>: Text "The 3nd argument is an Int, Maybe the arguments are in the wrong order?"]
+             ,  Text "The 3rd argument to pBetween has to be the parser to apply.")]
+      , ![ Check (IsParser f) ]
+      ] => int1 -> int2 -> fa -> f [a]
+pBetween = Derived.pBetween
+\end{code}
 
 % Uninteresting cases.
 

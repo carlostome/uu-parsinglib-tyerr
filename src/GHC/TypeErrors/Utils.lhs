@@ -20,9 +20,15 @@ for the library.
 
 \label{functiontype}
 \begin{code}
-type FunctionType (arg :: Nat) f (n :: Nat) =
+type FunctionType (arg :: Nat) (f :: *) (n :: Nat) =
   VCat  ![Text "Expected as #" :<>: ShowType arg :<+>:
         ^^ Text "argument a function type of" :<+>: ShowType n :<+>:
+        ^^ Text "arguments but got" :<>: Colon
+        ^^,Indent 4 (ShowType f) :<>: Dot ]
+
+type FunctionTypeParser (arg :: Nat) (f :: *) (n :: Nat) =
+  VCat  ![Text "Expected as #" :<>: ShowType arg :<+>:
+        ^^ Text "argument a parser with an underlying function type of" :<+>: ShowType n :<+>:
         ^^ Text "arguments but got" :<>: Colon
         ^^,Indent 4 (ShowType f) :<>: Dot ]
 
@@ -38,4 +44,5 @@ type family MakeParserArg p where
 data MakeParserArgSym :: ((k , Nat) ~> ErrorMessage) -> *
 
 type instance Apply MakeParserArgSym x = MakeParserArg x
+
 \end{code}
