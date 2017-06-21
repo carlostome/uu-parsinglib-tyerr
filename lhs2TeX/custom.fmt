@@ -42,6 +42,7 @@
 %format <<|>  = "<\!\!<\!\!|\!\!>"
 %format :<+>: = ":\!\oplus\!:"
 %format :/~:  = ":\nsim:"
+%format :~?:  = ":\nsim^{?}:"
 %format ~     = "\;\sim\;"
 %format :=>:  = ":\Rrightarrow:"
 %format :=?>:  = ":\Rrightarrow^{?}:"

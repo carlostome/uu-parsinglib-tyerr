@@ -45,4 +45,11 @@ data MakeParserArgSym :: ((k , Nat) ~> ErrorMessage) -> *
 
 type instance Apply MakeParserArgSym x = MakeParserArg x
 
+type ExpectedErrorMessage (name :: Symbol) (argn :: Nat) (descr :: Symbol) (t :: *) =
+  VCat  ![Text "The #" :<>: ShowType n :<+>: Text "argument to" :<+>: Quote (Text name)
+          :<+>: Text "is expected to be" :<+>: Text descr :<>: Comma
+        ^^,Text "but its type is" :<>: Colon
+        ^^,Empty
+        ^^,Indent 2 (ShowType t) ]
+
 \end{code}
