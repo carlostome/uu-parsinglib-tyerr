@@ -8,6 +8,12 @@
               KindSignatures,
               CPP #-}
 
+{-# LANGUAGE  DataKinds,
+              TypeOperators,
+              TypeFamilies,
+              AllowAmbiguousTypes,
+              PolyKinds,
+              ConstraintKinds #-}
 module Text.ParserCombinators.UU.TyErr.Core
   ( -- * Classes
     Core.IsParser,
@@ -79,19 +85,32 @@ import Control.Monad
 % --   mplus = (<|>)
 
 
-The module we are working on defines in |class (Alternative p) => ExtAlternative p|
-a set of combinators useful for combining parsers. We have two options to
-customize such combinators with domain specific errors. We could construct
-something like |class (ExtAlternative p) => ExtAlternativeTyErr p| with exactly
-the same methods as |ExtAlternative| but with custom error messages, or instead
-not introduce a new class but just define new method with the same identifier
-and the custom error messages.
+\subsection{ExtAlternative class}
 
+uu-parsinglib defines the type class |ExtAlternative| which is meant to
+provide greedy versions of the parsers that can be built from the Haskell
+|Alternative| type class.
+
+To customize the type errors of the methods of this class we have two options.
+We can define a new class hat has exactly the same methods as |ExtAlternative|
+and is a subclass of it, but with customized error messages in their types, or
+instead just define functions with the same names and check that the |p| type arguments
+belongs to |ExtAlternative| class.
+
+We choose to follow the later approach as it seems to be more straightforward,
+besides that the information about the customized type class might leak and we do not
+want to expose its existence.
+
+Therefore, we customize the following methods of |ExtAlternative|,
+
+%if style /= newcode
 \begin{code}
 (<<|>) :: ExtAlternative p => p a -> p a -> p a
-(<<|>) = (Core.<<|>)
 (<?>)  :: ExtAlternative p => p a -> String -> p a
-(<?>) = (Core.<?>)
+\end{code}
+%endif
+
+\begin{code}
 must_be_non_empty   :: ExtAlternative p => String -> p a ->        c -> c
 must_be_non_empty   = Core.must_be_non_empty
 must_be_non_empties :: ExtAlternative p => String -> p a -> p b -> c -> c
@@ -103,6 +122,47 @@ infix   2  <?>
 infixl  3  <<|>
 infixl  2 `opt`
 \end{code}
+
+
+\begin{code}
+
+type ExpectedErrorMessage (fun :: Symbol) (n :: Nat) (exp :: Symbol) (t :: *) =
+  VCat ![Text "The #" :<>: ShowType n :<+>: Text "argument to" :<+>: Quote (Text fun)
+          :<+>: Text "is expected to be a" :<+>: Text exp :<>: Comma
+        ,Text "but it is" :<>: Colon
+        ,Empty
+        , Indent 4 (ShowType t) ]
+
+(<<|>) :: CustomErrors
+  ![ ![ p1 :/~: p a1 :=>: ExpectedErrorMessage "(<<|>)" 1 "parser" p1
+      , p2 :/~: p a
+          :=?>: !( ![p2 :~?: String :=!>: VCat  ![ Text "The 2nd argument to (<<|>) is a String and not a parser."
+                                                 , Text "Maybe you wanted to use (<?>)?"]]
+                           , ExpectedErrorMessage "(<<|>)" 2 "parser" p2) ]
+  ,  ![ a1 :/~: a :=>: VCat ![ Text "The underlying type of the parsers to (<<|>) have to match,"
+                             , Text "but it doesn't."
+                             , Empty
+                             , Indent 4 (Quote (ShowType p1) :<+>: Text "against" :<+>: Quote (ShowType p2))
+                             , Empty
+                             , Indent 4 (Quote (ShowType a1) :<+>: Text "against" :<+>: Quote (ShowType a)) ]]
+  ,  ![ Check (ExtAlternative p) ]
+  ] => p1 -> p2 -> p a
+(<<|>) = (Core.<<|>)
+
+(<?>)  :: CustomErrors
+  ![  ![ pa :/~: p a :=>: ExpectedErrorMessage "(<?>)" 1 "parser" pa
+       , str :/~: String :=?>:
+            !( ![str :~?: pa :=!>: VCat  ![ Text "The 2nd argument to (<?>) is a parser and not a String."
+                                         , Text "Maybe you wanted to use (<<|>)?"]]
+                                , ExpectedErrorMessage "<?>" 2 "String" str)]
+   ,  ![ Check (ExtAlternative p) ]
+   ] => pa -> str -> p a
+(<?>) = (Core.<?>)
+\end{code}
+
+As can be seen in the code, we consider the methods |(<<|>)| and |(<?>)| to be
+\textit{siblings} because they only differ in the type one argument and we hint
+the user to use the other method in the appropiate case.
 
 % -- -- | The class `Eof` contains a function `eof` which is used to check whether we have reached the end of the input and `deletAtEnd`
 % -- --   should discard any unconsumed input at the end of a successful parse.
@@ -252,11 +312,60 @@ pSymExt = Core.pSymExt
 micro :: P state a -> Int -> P state a
 micro = Core.micro
 
-amb :: P st a -> P st [a]
-amb = Core.amb
+pSwitch :: (st1 -> (st2, st2 -> st1)) -> P st2 a -> P st1 a -- we require let (n,f) = split st in f n to be equal to st
+pSwitch  = Core.pSwitch
+\end{code}
 
+\subsection{Evaluation functions}
+
+%if style /= newcode
+\begin{code}
+parse   :: (Eof t) => P t a -> t -> a
+parse_h :: (Eof t) => P t a -> t -> a
+\end{code}
+%endif
+
+In order to give a custom error message, we should note that the
+error for this functions has to be biased towards the type |P t a|, because
+if that argument is not a parser then it doesn't make sense to check whether
+the second argument's type |t| matches the parser state.
+
+\begin{code}
+type ParseError (name :: Symbol) = forall p  t t1 a.
+  CustomErrors
+    ![ ![ p  :/~: P t1 a  :=>:
+          VCat  ![Text "The first argument to" :<+>: Text name :<+>:
+                  Text "should be the parser to use."
+                ^^,Indent 2 (VCat  ![Text "But its type is" :<+>: Quote (ShowType p) :<>: Comma
+                                   ^^,Text "while something of type 'P st a` was expected."])]]
+     , ![ t1 :/~: t       :=>:
+          VCat  ![Text "The type of the 2nd argument to"   :<+>: Text name :<+>: Text "has to match the type"
+                ^^,Text "of the state for the given parser" :<+>: Quote (ShowType p)
+                ^^,Text "but its type is" :<+>: Quote (ShowType t)]]
+     , ![ Check (Eof t) ]
+     ] => p -> t -> a
+
+parse :: ParseError "parse"
+parse  = Core.parse
+
+parse_h :: ParseError "parse_h"
+parse_h = Core.parse_h
+\end{code}
+
+It is a common source of errors to try use an evaluator function for a DSL
+and supply the arguments in the wrong order. However, it is not possible to
+give a custom error message that in the case where |p :/~: P t1 a| checks if
+the |t| is a parser and |p| its state.
+
+% Boring cases where there is no oportunity to customize error messages.
+
+%if style == newcode
+\begin{code}
 pErrors :: StoresErrors st error => P st [error]
 pErrors = Core.pErrors
+
+amb :: P st a -> P st [a]
+amb = Core.amb
 
 pPos :: HasPosition st pos => P st pos
 pPos = Core.pPos
@@ -264,21 +373,10 @@ pPos = Core.pPos
 pState :: P st st
 pState = Core.pState
 
+eval :: Steps   a      ->  a
+eval = Core.eval
 
 pEnd    :: (StoresErrors st error, Eof st) => P st [error]
 pEnd    = Core.pEnd
-
-pSwitch :: (st1 -> (st2, st2 -> st1)) -> P st2 a -> P st1 a -- we require let (n,f) = split st in f n to be equal to st
-pSwitch  = Core.pSwitch
-
-
-parse :: (Eof t) => P t a -> t -> a
-parse   = Core.parse
-
-parse_h :: (Eof t) => P t a -> t -> a
-parse_h = Core.parse_h
-
-eval :: Steps   a      ->  a
-eval = Core.eval
 \end{code}
-
+%endif

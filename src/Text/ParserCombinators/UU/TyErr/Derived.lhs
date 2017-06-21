@@ -7,14 +7,14 @@
               FlexibleInstances,
               FlexibleContexts,
               UndecidableInstances,
-              NoMonomorphismRestriction,
-              DataKinds,
+              NoMonomorphismRestriction #-}
+
+{-# LANGUAGE  DataKinds,
               TypeOperators,
               TypeFamilies,
               AllowAmbiguousTypes,
               PolyKinds,
               ConstraintKinds #-}
-
 module Text.ParserCombinators.UU.TyErr.Derived where
 
 import qualified Text.ParserCombinators.UU.Derived as Derived
