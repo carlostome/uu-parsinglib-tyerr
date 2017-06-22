@@ -53,8 +53,10 @@ module Text.ParserCombinators.UU.TyErr.Core
     -- ** Evaluating the online result
     Core.eval,
     -- ** Re-exported modules
-    module Control.Applicative,
-    module Control.Monad
+    Applicative,
+    Applicative.pure, (<$>), (<*>), (<*), (*>),
+    Alternative,
+    Applicative.empty, (<|>)
   ) where
 
 import qualified Text.ParserCombinators.UU.Core as Core
@@ -75,8 +77,12 @@ import GHC.TypeLits
 import GHC.TypeErrors.Utils
 import GHC.TypeErrors.PP
 
-import Control.Applicative
-import Control.Monad
+import qualified Control.Applicative as Applicative
+import Control.Applicative (Alternative)
+
+import Prelude hiding ((<$>), (<*>), (<*), (*>), (<|>))
+
+import Prelude (Functor, Applicative, String, Int, Maybe)
 \end{code}
 %endif
 
@@ -102,31 +108,27 @@ Therefore, we customize the following methods of |ExtAlternative|,
 \begin{code}
 (<<|>) :: ExtAlternative p => p a -> p a -> p a
 (<?>)  :: ExtAlternative p => p a -> String -> p a
+must_be_non_empty   :: ExtAlternative p => String -> p a ->        c -> c
+must_be_non_empties :: ExtAlternative p => String -> p a -> p b -> c -> c
 \end{code}
 %endif
 
-\begin{code}
-must_be_non_empty   :: ExtAlternative p => String -> p a ->        c -> c
-must_be_non_empty   = Core.must_be_non_empty
-must_be_non_empties :: ExtAlternative p => String -> p a -> p b -> c -> c
-must_be_non_empties = Core.must_be_non_empties
-opt                 :: ExtAlternative p => p a ->   a -> p a
-opt                 = Core.opt
+From the type signature we can understand that both methods | (<<>) | and
+|(<?>)| can considered to be \textit{siblings} because they only differ in the
+type one argument. Moreover, this is also the case with |must_be_non_empty| and
+|must_be_non_empties|.  Therefore, in the customized type error we can hint the
+user that maybe he/she intended to use the \textit{sibling}
 
-infix   2  <?>
-infixl  3  <<|>
-infixl  2 `opt`
-\end{code}
 
 
 \begin{code}
 (<<|>) :: CustomErrors
   ![ ![ p1 :/~: p a1 :=>: ExpectedErrorMessage "(<<|>)" 1 "parser" p1
       , p2 :/~: p a
-          :=?>: !( ![p2 :~?: String :=!>: VCat  ![ Text "The 2nd argument to (<<|>) is a String and not a parser."
-                                                 , Text "Maybe you wanted to use (<?>)?"]]
+          :=?>: !( ![p2 :~?: String :=!>: VCat  ![ Text "The 2nd argument to '(<<|>)' is a String and not a parser."
+                                                 , Text "Maybe you wanted to use '(<?>)'?"]]
                            , ExpectedErrorMessage "(<<|>)" 2 "a parser" p2) ]
-  ,  ![ a1 :/~: a :=>: VCat ![ Text "The underlying type of the parsers to (<<|>) have to match,"
+  ,  ![ a1 :/~: a :=>: VCat ![ Text "The underlying type of the parsers to '(<<|>)' have to match,"
                              , Text "but it doesn't."
                              , Empty
                              , Indent 2 (Quote (ShowType p1) :<+>: Text "against" :<+>: Quote (ShowType p2))
@@ -139,17 +141,50 @@ infixl  2 `opt`
 (<?>)  :: CustomErrors
   ![  ![ pa :/~: p a :=>: ExpectedErrorMessage "(<?>)" 1 "parser" pa
        , str :/~: String :=?>:
-            !( ![str :~?: pa :=!>: VCat  ![ Text "The 2nd argument to (<?>) is a parser and not a String."
-                                         , Text "Maybe you wanted to use (<<|>)?"]]
+            !( ![str :~?: pa :=!>:
+                    VCat  ![  Text "The 2nd argument to (<?>) is a parser and not a String."
+                          ^^, Text "Maybe you wanted to use (<<|>)?"]]
                                 , ExpectedErrorMessage "<?>" 2 "a String" str)]
    ,  ![ Check (ExtAlternative p) ]
    ] => pa -> str -> p a
 (<?>) = (Core.<?>)
+
+must_be_non_empty :: CustomErrors
+  ![  ![  str :/~: String :=>: ExpectedErrorMessage "must_be_non_empty" 1 "a String for the error message" str
+      ^^, pa :/~: p a     :=>: ExpectedErrorMessage "must_be_non_empty" 2 "a parser" pa]
+  ,   ![ cf :/~: (c -> c) :=?>:
+          !( ![ cf :~?: (p b -> c -> c) :=!>: VCat ![ Text "One argument extra given to must_be_non_empty,"
+                                              , Text "Maybe you wanted to use must_be_non_empties?"]]
+              , ExpectedErrorMessage "must_be_non_empties" 3 "a parser" pbc  )]
+  ,   ![ Check (ExtAlternative p) ]
+  ] => str -> pa -> cf
+must_be_non_empty   = Core.must_be_non_empty
+
+must_be_non_empties :: CustomErrors
+  ![  ![  str :/~: String :=>: ExpectedErrorMessage "must_be_non_empties" 1 "a String for the error message" str
+      ^^, pa :/~: p a     :=>: ExpectedErrorMessage "must_be_non_empties" 2 "a parser" pa]
+  ,   ![ pbc :/~: (p1 b -> c -> c) :=?>:
+          !( ![ pbc :~?: (c -> c) :=!>: VCat ![ Text "Missing argument for must_be_non_empties,"
+                                              , Text "Maybe you wanted to use must_be_non_empty?"]]
+              , ExpectedErrorMessage "must_be_non_empties" 3 "a parser" pbc  )]
+  ,   ![ p :/~: p1 :=>: VCat ![Text "The parsers of the 2nd and 3rd argument of must_be_non_empties do not match,"
+                              , Indent 2 (Quote (ShowType p) :<+>: Text "against" :<+>: Quote (ShowType p1))]]
+  ,   ![ Check (ExtAlternative p) ]
+  ] => str -> pa -> pbc
+must_be_non_empties   = Core.must_be_non_empties
+
 \end{code}
 
-As can be seen in the code, we consider the methods | (<<>) | and |(<?>)| to be
-\textit{siblings} because they only differ in the type one argument and we hint
-the user to use the other method in the appropriate case.
+%if style == newcode
+\begin{code}
+opt                 :: ExtAlternative p => p a ->   a -> p a
+opt                 = Core.opt
+
+infix   2  <?>
+infixl  3  <<|>
+infixl  2 `opt`
+\end{code}
+%endif
 
 \subsection{Various combinators}
 
@@ -174,7 +209,7 @@ micro ::
     ] => p -> int -> P state a
 micro = Core.micro
 
-pSwitch :: (st1 -> (st2, st2 -> st1)) -> P st2 a -> P st1 a 
+pSwitch :: (st1 -> (st2, st2 -> st1)) -> P st2 a -> P st1 a
 pSwitch  = Core.pSwitch
 \end{code}
 
@@ -227,5 +262,86 @@ of |Functor|, |Applicative| and |Alternative| type classes defined in Haskell
 standard library. Instead of redefining the classes to give custom error we
 define the same combinators they offer but enhanced with custom error messages.
 
-The disadvantage of this approach is that the user has to remember to hide the
+The disadvantage of this approach is that the user has to hide the
 actual methods from this type classes when using the library.
+
+For the case of the infix version of |fmap|, with type |Functor f => (a -> b) -> f a -> f b|
+we are going to customize the error to be biased towards the
+second argument being a parser. This means that first of all we check this
+condition alone, thus enabling to propose as \sibling |(<*>)| in case the
+second argument is a function wrapped in the same parser type.
+
+If we had checked at the same level both conditions, the first argument being a
+function and the second one being a parser, in case neither conditions where
+satisfied but the first argument matched a function wrapped on a parser type we
+would give a very strange error message to the user.
+
+\begin{code}
+(<$>) ::
+  CustomErrors
+    ![ ![ p1  :/~: p a       :=>: ExpectedErrorMessage "(<$>)" 2 "a parser" p1]
+     , ![ f1  :/~: (a1 -> b) :=?>:
+            !( ![ f1 :~?: p (a -> b) :=!>:
+                    VSep  ![Text "The 1st argument to '(<$>)' is a function wrapped in a parser,"
+                             :$$: Indent 2 (ShowType f1)
+                           , Text "Maybe you pretended to use '(<*>)'?" ]]
+             , ExpectedErrorMessage "(<$>)" 1 "a function of at least 1 argument" f1)]
+     , ![ a :/~: a1 :=>:
+          VSep  ![Text "In the application of '(<$>)', the source type of the function in the 1st argument"
+                    :$$: Quote (ShowType f1) :<>: Comma
+                ^^,Indent 2 (ShowType a1)
+                ^^,Text "and the underlying type of the parser in the 2nd argument,"
+                     :<+>: Quote (ShowType p1)
+                ^^,Indent 2 (ShowType a)
+                ^^,Text "should match."]]
+     , ![ Check (Functor p) ]
+     ] => f1 -> p1 -> p b
+(<$>) = (Applicative.<$>)
+\end{code}
+
+In the case of the function |(<*>)| from Applicative, we have a similar
+situation. We have to bias the error to the second argument being a parser, so
+in case the first argument is not a function wrapped in the same type of parser
+we can give |(<$>)| as a \sibling.
+
+\begin{code}
+(<*>) ::
+  CustomErrors
+    ![ ![ p1  :/~: p a          :=>: ExpectedErrorMessage "(<*>)" 2 "a parser" p1]
+     , ![ f1  :/~: p2 (a1 -> b) :=?>:
+            !( ![ f1 :~?: (a -> b) :=!>:
+                    VSep  ![Text "The 1st argument to '(<*>)' is a plain function,"
+                           ,Indent 2 (ShowType f1)
+                           ,Text "but it should be wrapped on a parser as,"
+                           ,Indent 2 (ShowType (p f1))
+                           ,Text "Maybe you pretended to use '(<$>)'?" ]]
+             , ExpectedErrorMessage "(<*>)" 1 "a parser with a function type of at least 1 argument" f1)]
+     , ![ a :/~: a1 :=>:
+          VSep  ![Text "In the application of '(<*>)', the source type of the function in the 1st argument"
+                    :$$: Quote (ShowType f1) :<>: Comma
+                ^^,Indent 2 (ShowType a1)
+                ^^,Text "and the underlying type of the parser of the 2nd argument,"
+                     :<+>: Quote (ShowType p1)
+                ^^,Indent 2 (ShowType a)
+                ^^,Text "should match."]
+        , p2 :/~: p :=>: DifferentParsers "(<*>)" ![ !(p, 1 ) , !(p2, 2) ]]
+     , ![ Check (Applicative p) ]
+     ] => f1 -> p1 -> p b
+(<*>) = (Applicative.<*>)
+\end{code}
+
+For the following combinators, the kind of type errors that could be happening
+are very similar in structure so we can abstract over them.
+
+type family AppCombErrorMessage (name :: Symbol) (b :: Bool) = 
+  AppCombErrorMessage name  
+\begin{code}
+(<*)  :: Applicative f => f a -> f b -> f a
+(<*)  = (Applicative.<*)
+
+(*>)  :: Applicative f => f a -> f b -> f b
+(*>)  = (Applicative.*>)
+
+(<|>) :: Alternative f => f a -> f a -> f a
+(<|>) = (Applicative.<|>)
+\end{code}

@@ -40,6 +40,10 @@ type family VCat a where
   VCat nil       = Empty
   VCat (x !: xs) = x :$$: VCat xs
 
+type family VSep a where
+  VSep nil       = Empty
+  VSep (x !: xs) = x :$$: Empty :$$: VSep xs
+
 type family HCat a where
   HCat nil       = Empty
   HCat (x !: xs) = x :<>: HCat xs

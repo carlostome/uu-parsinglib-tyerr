@@ -6,8 +6,8 @@
 \usepackage{xargs}
 \usepackage[pdftex,dvipsnames]{xcolor}
 \usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
-
 \begin{document}
+\newcommand{\sibling}{\textit{sibling}}
 
 \author{Carlos Tom\'e Corti\~nas}
 \title{Type error customization in uu-parsinglib\footnote{\url{https://hackage.haskell.org/package/uu-parsinglib}}}
