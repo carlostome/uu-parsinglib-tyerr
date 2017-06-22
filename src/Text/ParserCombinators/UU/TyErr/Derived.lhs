@@ -17,13 +17,13 @@
               ConstraintKinds #-}
 module Text.ParserCombinators.UU.TyErr.Derived where
 
+import           Text.ParserCombinators.UU.Core    (Alternative (..), IsParser)
 import qualified Text.ParserCombinators.UU.Derived as Derived
-import           Text.ParserCombinators.UU.Core    (IsParser, Alternative(..))
 
 import           GHC.TypeErrors
-import           GHC.TypeLits
-import           GHC.TypeErrors.Utils
 import           GHC.TypeErrors.PP
+import           GHC.TypeErrors.Utils
+import           GHC.TypeLits
 \end{code}
 %endif
 

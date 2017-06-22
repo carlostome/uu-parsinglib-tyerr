@@ -18,3 +18,6 @@ clean:
 distclean:
 	latexmk -f -outdir=doc -C doc/doc.tex
 	rm -f doc/doc.ptb doc/doc.tex doc/doc.pdf
+
+debug:
+	LHS2TEX=$(LHS2TEX_DIR) lhs2TeX --newcode doc/doc.lhs

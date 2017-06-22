@@ -43,6 +43,7 @@
 %format <*  = "<\!\!\star"
 %format *>  = "\star\!\!>"
 %format <..>  = "<\!\!..\!\!>"
+%format <|>  = "<\!\!|\!\!>"
 %format <<|>  = "<\!\!<\!\!|\!\!>"
 %format :<+>: = ":\!\oplus\!:"
 %format :/~:  = ":\nsim:"
@@ -53,6 +54,7 @@
 %format :=!>:  = ":\Rrightarrow^{!}:"
 %format forall = "\forall "
 %format . = "."
+%format ... = "\dots"
 
 %endif
 
