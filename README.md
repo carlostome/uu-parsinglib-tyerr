@@ -4,6 +4,9 @@ Wrapper arround
 [uu-parsinglib](https://hackage.haskell.org/package/uu-parsinglib) with
 customized type error messages.
 
+A detailed explanation of how the customization of the library has been
+done can be found on doc/doc.pdf.
+
 ## Build as a Haskell library
 
 In order to use it as a Haskell library is necessary to have installed the
@@ -18,8 +21,8 @@ following:
 
 ```
 cabal sandbox init
-cabal install   --only-dependencies --with-compiler=/path/to/compiler/inplace/bin/ghc-stage2 --package-db=home/carlos/Dev/Haskell/ghc/inplace/lib/package.conf.d --allow-newer=template-haskell
-cabal configure --with-compiler=/path/to/compiler/inplace/bin/ghc-stage2 --package-db=path/to/compiler/inplace/lib/package.conf.d --allow-newer=template-haskell
+cabal install   --only-dependencies --with-compiler=/path/to/ghc/inplace/bin/ghc-stage2 --package-db=home/carlos/Dev/Haskell/ghc/inplace/lib/package.conf.d --allow-newer=template-haskell
+cabal configure --with-compiler=/path/to/ghc/inplace/bin/ghc-stage2 --package-db=path/to/compiler/inplace/lib/package.conf.d --allow-newer=template-haskell
 cabal build
 ```
 
