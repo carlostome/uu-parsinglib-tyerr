@@ -18,7 +18,7 @@ import           GHC.TypeErrors.PP
 This module defines domain specific combinators for type error messages
 for the library.
 
-\label{functiontype}
+\label{Utils}
 \begin{code}
 type FunctionType (arg :: Nat) (f :: *) (n :: Nat) =
   VCat  ![Text "Expected as #" :<>: ShowType arg :<+>:
@@ -32,6 +32,12 @@ type FunctionTypeParser (arg :: Nat) (f :: *) (n :: Nat) =
         ^^ Text "arguments but got" :<>: Colon
         ^^,Indent 4 (ShowType f) :<>: Dot ]
 
+type FunctionTypeParserEq (arg :: Nat) (f :: *) (n :: Nat) =
+  VCat  ![Text "Expected as #" :<>: ShowType arg :<+>:
+        ^^ Text "argument a parser with an underlying function type of" :<+>: ShowType n :<+>:
+        ^^ Text "arguments, with all arguments and target of the same type but got" :<>: Colon
+        ^^,Indent 2 (ShowType f) :<>: Dot ]
+
 type family DifferentParsers (f :: Symbol) (p :: [(k,Nat)]) where
   DifferentParsers f p =
     Text "The parsers of the arguments for" :<+>: Text f :<+>: Text "do not coincide:" :$$:
@@ -39,7 +45,7 @@ type family DifferentParsers (f :: Symbol) (p :: [(k,Nat)]) where
 
 type family MakeParserArg p where
   MakeParserArg !(p,n) = Text "The parser of the #" :<>: ShowType n :<+>:
-                         Text "argument is" :<+>: ShowType p :<>: Dot
+                         Text "argument is" :<+>: Quote (ShowType p) :<>: Dot
 
 data MakeParserArgSym :: ((k , Nat) ~> ErrorMessage) -> *
 
@@ -51,4 +57,11 @@ type ExpectedErrorMessage (name :: Symbol) (argn :: Nat) (descr :: Symbol) t =
         ^^,Empty
         ^^,Indent 2 (ShowType t) ]
 
+type IsNotOfParserKind (name :: Symbol) (argn :: Nat) p1 p a =
+  p1 :/~: p a :=>: ExpectedErrorMessage name argn "a parser" p1
+
+type family IsNotAParser (p :: * -> *) where
+  IsNotAParser ((->) b) = True
+  IsNotAParser []       = True
+  IsNotAParser _        = False
 \end{code}

@@ -146,7 +146,7 @@ At ... , we would like that we have certainty of |p| being a parser.  However,
 the semantics of the combinators for customizing error messages do not ensure
 us that this is the case.
 
-Because of such limitation, we can make use of a type families that
+Because of such limitation, we can make use of type families that
 will help us to discard the cases where we are sure the argument cannot be a
 parser.  If the type of |p1| cannot be decomposed into some |p| applied to |a|
 then it is not a parser, maybe is some type of kind |*| such as Int, String,
@@ -156,15 +156,9 @@ But if the type can be decomposed, then we must make sure is not of some type
 that we know it is not an instance of |Parser|.  For example, |p = ((->) b)|
 has the right kind but it is not a parser.
 
-\begin{code}
-type IsNotOfParserKind (name :: Symbol) (argn :: Nat) p1 p a =
-  p1 :/~: p a :=>: ExpectedErrorMessage name argn "a parser" p1
-
-type family IsNotAParser (p :: * -> *) where
-  IsNotAParser ((->) b) = True
-  IsNotAParser []       = True
-  IsNotAParser _        = False
-\end{code}
+This are defined in \ref{sec:Utils} as |IsNotOfParserKind| and |IsNotAParser|.
+The former checks the condition of being of the appropriate shape and the later
+discards cases we know are not parsers.
 
 Now that we have some kind of assurance (even not that much) that the second
 argument to the function looks like a parser, we can check the second argument
@@ -459,15 +453,15 @@ addLength ::
     ] => int -> p -> P st a
 addLength = Core.addLength
 
-pSymExt ::  (forall a. (token -> state  -> Steps a) -> state -> Steps a) -> Core.Nat -> Maybe token -> P state token
-pSymExt = Core.pSymExt
-
 micro ::
   CustomErrors
     ![  ![ int :/~: Int      :=>: ExpectedErrorMessage "micro" 2 "the cost to add" int
         ^^, p :/~: P state a :=>: ExpectedErrorMessage "micro" 1 "a parser" p]
     ] => p -> int -> P state a
 micro = Core.micro
+
+pSymExt ::  (forall a. (token -> state  -> Steps a) -> state -> Steps a) -> Core.Nat -> Maybe token -> P state token
+pSymExt = Core.pSymExt
 
 pSwitch :: (st1 -> (st2, st2 -> st1)) -> P st2 a -> P st1 a
 pSwitch  = Core.pSwitch

@@ -70,6 +70,21 @@ end of a sentence makes it unreadable. As an improvement to this mechanism
 I would like to have access to all the pretty printing machinery implemented
 in GHC through a type level API that can allow for much better formatting of
 the error messages.
+
+\item
+Providing the user with meaningful error messages according to the selected
+domain is not an easy task. Especially with polymorphic combinators and a lot of
+siblings present, the author of the library will have to take into account all
+the possible corner cases of type errors that could arise from the use of the
+library. Moreover, due to the somewhat limited expressivity of the type error
+DSL an educated choice has to be made to give preference to some of the
+arguments to a function over others.
+
+\item
+Sometimes debugging customized type error messages with kind errors can be a bit
+cumbersome as the outputted error messages by GHC are just unreadable given a
+somewhat involved customized error. Maybe it could be nice to provide customized
+kind error messages to the type error DSL itself.
 \end{itemize}
 
 \appendix
