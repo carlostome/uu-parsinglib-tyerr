@@ -56,10 +56,8 @@ pEither = Derived.pEither
 
 \subsection{Infix combinators}
 
-More 
-Another interesting case for error customization is when an arrow type is
-expected as an argument and some other argument's type has a
-relation with it. In the combinator with type:
+This module provides two infix combinators for parsers with underlying function
+types,
 
 %if style /= newcode
 \begin{code}
@@ -68,78 +66,66 @@ relation with it. In the combinator with type:
 \end{code}
 %endif
 
-First, we can see that the first argument is expected to be a function with at
-least two arguments. Moreover, the second argument's type must coincide with the
-underlying type of the parser |p|. The later error is dependent of the former
-because if the first argument is not a function then there is nothing else to
-check. Therefore, we will encode this with the following type signature.
+The second combinator, |(<??>)| is very similar to the ones we defined in the core
+module and up to some extent it can be considered a \sibling of them. However, it is
+different in the sense that the plain parser type |p a| occurs in the first argument as
+opossed to those other combinators in \ref{subsec:Functor}. Unlike those othe combinators, the
+error message of this type won't be biased towards any of its arguments and only in case the
+underlying arrow type if the second argument is not as expected we will make a suggestion.
+
+\begin{code}
+(<??>) ::
+  CustomErrors
+    ![ ![ IsNotOfParserKind "(<??>)" 1 p2 p1 a1
+        , IsNotOfParserKind "(<??>)" 1 p4 p3 f]
+     , ![ IsNotAParser p1 :/~: False :=>: ExpectedErrorMessage "(<??>)" 1 "a parser" p2
+        , IsNotAParser p3 :/~: False :=>: ExpectedErrorMessage "(<??>)" 1 "a parser" p4]
+     , ![p1 :/~: p3 :=>: DifferentParsers "(<??>)" ![ !(p2, 1 ) , !(p4, 2) ]]
+     , ![ f :/~: (a2 -> a2) :=?>:
+          !( ![ f :~?: a1 :=!>:
+                VSep ![Text "In the application of '(<??>)', the underlying type of the #1 argument parser"
+                        :$$: Quote (ShowType p2) :<>: Comma
+                     ^^,Indent 2 (ShowType a1)
+                     ^^,Text "is not a function. But the underlying type of the parser in the #2 argument,"
+                        :$$: Quote (ShowType p4) :<>: Comma
+                     ^^,Indent 2 (ShowType a1)
+                     ^^,Text "matches." :$$: Text "Maybe you intended to use  '(<|>)' or '(<<|>)'?"]]
+          ,   FunctionTypeParserEq 2 f 1)]
+   , ![ a1 :/~: a2        :=>:
+          VSep  ![Text "In the application of '(<??>)', the underlying type of the #1 argument parser"
+                     :<+>: Quote (ShowType p2) :<>: Comma
+                ^^,Indent 2 (ShowType a1)
+                ^^,Text "and the type of source and target of the function inside the #2 argument parser,"
+                ^^,Indent 2 (ShowType f)
+                ^^,Text "have to match." ]]
+   , ![ Check (IsParser p1) ]
+   ] => p2 -> p3 f -> p1 a1
+(<??>)         = (Derived.<??>)
+\end{code}
+
+The other combinator |<$$>| is much more easy to customize, as we can check independently the first
+argument to be a function and the second to be a parser.
 
 \begin{code}
 (<$$>) :: CustomErrors
-  ![ ![ f :/~: (a -> b1-> c) :=>:
-          VCat  ![ Text "Expected as 1st argument a function type of 2 arguments but got:"
-                ^^,Indent 4 (ShowType f)]
-      , IsNotOfParserKind "(<$$>)" 2 p1 p b]
-   , ![ IsNotAParser p  :/~: False :=>: ExpectedErrorMessage "(<$$>" 2 "a parser" p1]
+    ![ ![ IsNotOfParserKind "(<$$>)" 2 p2 p b
+        , f :/~: (a -> b1-> c) :=>: FunctionTypeParser 1 f 2]
+   , ![ IsNotAParser p  :/~: False :=>: ExpectedErrorMessage "(<$$>)" 2 "a parser" p2]
    , ![ b1 :/~: b  :=>:
-          VCat  ![Text "The underlying type of the parser" :<+>: Quote (ShowType p1)
-                ^^,Indent 4 (ShowType b)
-                ^^,Text "and the type of the 2nd argument of the function:"
-                ^^,Indent 4 (ShowType f)
-                ^^,Text "have to agree." ]]
+          VSep  ![Text "In the application of '(<$$>)', the underlying type of the #2 parser argument" 
+                   :<+>: Quote (ShowType p2)
+                ^^,Indent 2 (ShowType b)
+                ^^,Text "and the type of the #2 argument of the function given as #1 argument,"
+                ^^,Indent 2 (ShowType f)
+                ^^,Text "have to match." ]]
    , ![ Check (IsParser p) ]
    ] => f -> p b -> p (a -> c)
 (<$$>) = (Derived.<$$>)
 \end{code}
 
-It is interesting to note that through the customization of errors we will find
-ourselves many times with having multiple arguments that require the same
-parser. Therefore, by using some type level machinery we abstracted over this
-case providing the type level function |DifferentParsers (f :: Symbol) (p ::
-[(k,Nat)])|. This function defined in  expectes the name
-of the function we are customizing along a type level list of parsers numbered
-with the argument were they appear.
-
-With this tools, we can encode a custom error for the following combinator:
-
-%if style /= newcode
-\begin{code}
-\end{code}
-%endif
-
-As:
-
-\begin{code}
-(<??>) :: CustomErrors
-  ![ ![ (p1 :/~: p) :=>: DifferentParsers "<??>" ![ !(p1,1) , !(p,2)]]
-   , ![ f :/~: (a -> a)  :=>:
-          VCat  ![ Text "Expected the underlying type of the 2nd parser to be a function type"
-                   :<+>: Text "of 1 argument, but got:"
-                ^^,Indent 4 (ShowType f)]]
-   , ![ a :/~: a1        :=>:
-          VCat  ![Text "The underlying type of the 1st parser" :<+>: Quote (ShowType p)
-                ^^,Indent 4 (ShowType a1)
-                ^^,Text "and the type of source and target of function inside the 2nd parser:"
-                ^^,Indent 4 (ShowType f)
-                ^^,Text "have to agree." ]]
-   , ![ Check (IsParser p) ]
-   ] => p1 a1 -> p f -> p a1
-(<??>)         = (Derived.<??>)
-\end{code}
-
-We should also note that the case where a parser is wrapping an arrow type.
-Therefore, we can also abstract over this fact with the type level function
-|FunctionTypeParser (arg :: Nat) (f :: Symbol) (n :: Nat) :: ErrorMessage| defined in
-\todo{add reference}.
-
 \subsection{Function composition}
 
-The follwowing two combinators, show a similarity between their types. We can
-think that besides both parsers being the same parsers and the underlying types
-being functions of one argument, if the combination of source/target type of the
-functions does not match we can suggest the user that maybe he/she pretended to use 
-the other one.
-
+The follwowing two combinators, show a similarity between their types.
 %if style /= newcode
 \begin{code}
 (<.>)  :: IsParser p => p (b -> c) -> p (a -> b) -> p (a -> c)
@@ -147,85 +133,53 @@ the other one.
 \end{code}
 %endif
 
-\begin{code}
-(<.>) :: CustomErrors
-  ![ ![ p :/~: p2 :=>: DifferentParsers "<.>" ![ !(p, 1), !(p2 , 2) ]
-      , f1 :/~: (b1 -> c)  :=>: FunctionTypeParser 1 f1 1
-      , f2 :/~: (a -> b2)  :=>: FunctionTypeParser 2 f2 1]
-   ,![ b1 :/~: b2          :=>:
-          VCat  ![Text "The target type of the 2nd function:"
-                ^^,Indent 4 (ShowType b2)
-                ^^,Text "and the source type of the first one:"
-                ^^,Indent 4 (ShowType b1)
-                ^^,Text "should match."
-                ^^,Text "Maybe you wanted to use (<.>) instead?"]]
+In order to customize the error message we have to check that both arguments
+are parser like arguments, and they hold a function type inside. As a last step
+we should make sure the source/target of the arrow matches as expected.
 
+When the types do not match as expected we can suggest the user that maybe
+he intended to use the other.
+
+\begin{code}
+
+type CompositionError (name :: Symbol) (sug :: Symbol) p p1 p2 p3 f1 f2 a b1 b2 c tf1 tf2 =
+ CustomErrors
+    ![ ![ IsNotOfParserKind name 1 p1 p  f1
+        , IsNotOfParserKind name 2 p3 p2 f2]
+     , ![ IsNotAParser p  :/~: False :=>: ExpectedErrorMessage name 1 "a parser" p
+        ,  IsNotAParser p2 :/~: False :=>: ExpectedErrorMessage name 2 "a parser" p2]
+     , ![p :/~: p2 :=>: DifferentParsers "pEither" ![ !(p1, 1 ) , !(p3, 2) ]]
+     , ![ f1 :/~: tf1   :=>: FunctionTypeParser 1 f1 1
+        , f2 :/~: tf2   :=>: FunctionTypeParser 2 f2 1]
+   ,![ b1 :/~: b2   :=?>:
+        !( ![c :~?: a :=!>:
+              VCat  ![Text "The target type of the #2 function,"
+                    ^^,Indent 2 (ShowType b2)
+                    ^^,Text "and the source type of the #1 function,"
+                    ^^,Indent 2 (ShowType b1)
+                    ^^,Text "should match."
+                    ^^,Text "Maybe you wanted to use" :<+>: Quote (Text sug) :<+>: Text "?"]]
+         ,VCat  ![Text "In the use of" :<+>: Quote (Text name) :<+>: Text "the target type of the #2 function,"
+                ^^,Indent 2 (ShowType b2)
+                ^^,Text "and the source type of the #1 function,"
+                ^^,Indent 2 (ShowType b1)
+                ^^,Text "should match."])]
    , ![ Check (IsParser p) ]
-   ] => p f1 -> p2 f2 -> p (a -> c)
+   ]
+
+(<.>) :: CompositionError "<.>" "<..>" p p1 p2 p3 f1 f2 a b1 b2 c (b1 -> c) (a -> b2)
+      => p1 -> p3 -> p (a -> c)
 (<.>) = (Derived.<.>)
 
-(<..>) :: CustomErrors
-  ![ ![ p :/~: p2 :=>: DifferentParsers "<..>" ![ !(p, 1), !(p2 , 2) ]
-      , f2 :/~: (b1 -> c)  :=>: FunctionTypeParser 1 f1 1
-      , f1 :/~: (a -> b2)  :=>: FunctionTypeParser 2 f2 1]
-   ,![ b1 :/~: b2          :=>:
-          VCat  ![Text "The target type of the 2nd function:"
-                ^^,Indent 4 (ShowType b2)
-                ^^,Text "and the source type of the first one:"
-                ^^,Indent 4 (ShowType b1)
-                ^^,Text "should match."
-                ^^,Text "Maybe you wanted to use (<..>) instead?"]]
-
-   , ![ Check (IsParser p) ]
-   ] => p f1 -> p2 f2 -> p (a -> c)
+(<..>) :: CompositionError "<..>" "<.>" p p1 p2 p3 f1 f2 a b1 b2 c (a -> b1) (b2 -> c)
+      => p1 -> p3 -> p (a -> c)
 (<..>) = (Derived.<..>)
 \end{code}
 
-% Boring combinators
-%if style == newcode
-\end{code}
-%endif
+Maybe the abstraction of the custom error to the |CompositionError| type synonym is a little bit
+forced as we must include as the last two arguments the relation that must hold for each function type between the type variables
+|a b1 b2 c|.
 
-
-%if style == newcode
-\begin{code}
-pFoldr    :: IsParser p => (a -> a1 -> a1, a1) -> p a -> p a1
-pFoldr = Derived.pFoldr
-
-pFoldr_ng ::  IsParser p => (a -> a1 -> a1, a1) -> p a -> p a1
-pFoldr_ng = Derived.pFoldr_ng
-
-
-pFoldr1    :: IsParser p => (v -> b -> b, b) -> p v -> p b
-pFoldr1 = Derived.pFoldr1
-
-pFoldr1_ng ::  IsParser p => (v -> b -> b, b) -> p v -> p b
-pFoldr1_ng = Derived.pFoldr1_ng
-
-pList    :: IsParser p => p a -> p [a]
-pList     = Derived.pList
-
-pList_ng :: IsParser p => p a -> p [a]
-pList_ng  = Derived.pList_ng
-
-pList1    :: IsParser p =>  p a -> p [a]
-pList1     = Derived.pList1
-pList1_ng :: IsParser p => p a -> p [a]
-pList1_ng  = Derived.pList1_ng
-
-pFoldrSep    ::  IsParser p => (v -> b -> b, b) -> p a -> p v -> p b
-pFoldrSep = Derived.pFoldrSep
-
-pFoldrSep_ng ::  IsParser p => (v -> b -> b, b) -> p a -> p v -> p b
-pFoldrSep_ng = Derived.pFoldrSep_ng
-
-pFoldr1Sep    ::   IsParser p => (a -> b -> b, b) -> p a1 ->p a -> p b
-pFoldr1Sep = Derived.pFoldr1Sep
-
-pFoldr1Sep_ng ::   IsParser p => (a -> b -> b, b) -> p a1 ->p a -> p b
-pFoldr1Sep_ng = Derived.pFoldr1Sep_ng
-\end{code}
-%endif
 
 \subsection{List with separation parsers}
 
@@ -387,8 +341,8 @@ pBetween = Derived.pBetween
 
 
 \subsection{Other combinators}
-An interesting case of this pattern occurs when the numbers of parsers involved
-in the type of a combinator is greater than two. For example,
+
+The customization of the type error message of the follwing combinator,
 
 %if style /= newcode
 \begin{code}
@@ -396,12 +350,26 @@ pPacked :: IsParser p => p b1 -> p b2 -> p a -> p a
 \end{code}
 %endif
 
+Makes explicit why checking that the arguments are indeed parser does not scale well
+when there are more than two arguments with parser type. First we have to check that all
+three arguments have parser like arguments to have some kind of assurement. Then when we
+can more safely assume that at least they are parsers we should check that they are the same
+parser. However, we can only check a pair each time and because of this we should include
+in the error message all given parsers. Moreover, the checking has to be done in different steps
+not to prompt the user with more than one error message stating the error.
+
 \begin{code}
 pPacked :: CustomErrors
-  ![ ![ p  :/~: p1   :=>: DifferentParsers "pPacked" ![ !(p, 1), !(p1 , 2), !(p2, 3) ]
-      , p1 :/~: p2   :=>: DifferentParsers "pPacked" ![ !(p, 1), !(p1 , 2), !(p2, 3) ]]
-   , ![ Check (IsParser p) ]
-   ] => p b1 -> p1 b2 -> p2 a -> p a
+    ![ ![ IsNotOfParserKind "pPacked" 1 p2 p1 b1
+        , IsNotOfParserKind "pPacked" 2 p4 p3 b2
+        , IsNotOfParserKind "pPacked" 3 p6 p5 a  ]
+     , ![ IsNotAParser p1 :/~: False :=>: ExpectedErrorMessage "pPacked" 1 "a parser" p1
+        , IsNotAParser p3 :/~: False :=>: ExpectedErrorMessage "pPacked" 2 "a parser" p3
+        , IsNotAParser p5 :/~: False :=>: ExpectedErrorMessage "pPacked" 3 "a parser" p5]
+     ,  ![ p1  :/~: p3   :=>: DifferentParsers "pPacked" ![ !(p1, 1), !(p3 , 2), !(p5, 3) ]]
+     ,  ![ p3  :/~: p5   :=>: DifferentParsers "pPacked" ![ !(p1, 1), !(p3 , 2), !(p5, 3) ]]
+     ,  ![ Check (IsParser p1) ]
+   ] => p2 -> p4 -> p6 -> p1 a
 pPacked = Derived.pPacked
 \end{code}
 
@@ -431,5 +399,42 @@ pFail    = Derived.pFail
 
 pMaybe :: IsParser p => p a -> p (Maybe a)
 pMaybe   = Derived.pMaybe
+
+pFoldr    :: IsParser p => (a -> a1 -> a1, a1) -> p a -> p a1
+pFoldr = Derived.pFoldr
+
+pFoldr_ng ::  IsParser p => (a -> a1 -> a1, a1) -> p a -> p a1
+pFoldr_ng = Derived.pFoldr_ng
+
+
+pFoldr1    :: IsParser p => (v -> b -> b, b) -> p v -> p b
+pFoldr1 = Derived.pFoldr1
+
+pFoldr1_ng ::  IsParser p => (v -> b -> b, b) -> p v -> p b
+pFoldr1_ng = Derived.pFoldr1_ng
+
+pList    :: IsParser p => p a -> p [a]
+pList     = Derived.pList
+
+pList_ng :: IsParser p => p a -> p [a]
+pList_ng  = Derived.pList_ng
+
+pList1    :: IsParser p =>  p a -> p [a]
+pList1     = Derived.pList1
+pList1_ng :: IsParser p => p a -> p [a]
+pList1_ng  = Derived.pList1_ng
+
+pFoldrSep    ::  IsParser p => (v -> b -> b, b) -> p a -> p v -> p b
+pFoldrSep = Derived.pFoldrSep
+
+pFoldrSep_ng ::  IsParser p => (v -> b -> b, b) -> p a -> p v -> p b
+pFoldrSep_ng = Derived.pFoldrSep_ng
+
+pFoldr1Sep    ::   IsParser p => (a -> b -> b, b) -> p a1 ->p a -> p b
+pFoldr1Sep = Derived.pFoldr1Sep
+
+pFoldr1Sep_ng ::   IsParser p => (a -> b -> b, b) -> p a1 ->p a -> p b
+pFoldr1Sep_ng = Derived.pFoldr1Sep_ng
+
 \end{code}
 %endif
