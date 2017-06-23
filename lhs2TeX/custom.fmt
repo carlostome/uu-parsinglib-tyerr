@@ -22,6 +22,9 @@
 %format p1
 %format p2
 %format p3
+%format p4
+%format p5
+%format p6
 %format a1
 %format a2
 %format a3

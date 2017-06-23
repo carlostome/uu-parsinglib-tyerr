@@ -7,7 +7,8 @@
 \usepackage[pdftex,dvipsnames]{xcolor}
 \usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
 \begin{document}
-\newcommand{\sibling}{\textit{sibling}}
+\newcommand{\sibling}{\textit{sibling}~}
+\newcommand{\siblings}{\textit{siblings}~}
 
 \author{Carlos Tom\'e Corti\~nas}
 \title{Type error customization in uu-parsinglib\footnote{\url{https://hackage.haskell.org/package/uu-parsinglib}}}
@@ -55,6 +56,10 @@ a type |p| is indeed an instance of the class |IsParser|. Therefore, we must
 take additional measures to ensure that we rule out cases we know do not belong 
 to the class. Moreover, this additional measurements poison the type of
 the combinator that no longer can be reduced to a type similar to the original one.
+
+\item
+The type signatures for customized error messages are insanely big because all
+the cases they have to account for.
 
 \item
 The impossibility to include some form of reified expression where the type

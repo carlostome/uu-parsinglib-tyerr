@@ -69,8 +69,8 @@ types,
 The second combinator, |(<??>)| is very similar to the ones we defined in the core
 module and up to some extent it can be considered a \sibling of them. However, it is
 different in the sense that the plain parser type |p a| occurs in the first argument as
-opossed to those other combinators in \ref{subsec:Functor}. Unlike those othe combinators, the
-error message of this type won't be biased towards any of its arguments and only in case the
+opossed to those other combinators in \ref{subsec:Functor}. Unlike those other combinators, the
+error message of this type will not be biased towards any of its arguments and only in case the
 underlying arrow type if the second argument is not as expected we will make a suggestion.
 
 \begin{code}
@@ -112,7 +112,7 @@ argument to be a function and the second to be a parser.
         , f :/~: (a -> b1-> c) :=>: FunctionTypeParser 1 f 2]
    , ![ IsNotAParser p  :/~: False :=>: ExpectedErrorMessage "(<$$>)" 2 "a parser" p2]
    , ![ b1 :/~: b  :=>:
-          VSep  ![Text "In the application of '(<$$>)', the underlying type of the #2 parser argument" 
+          VSep  ![Text "In the application of '(<$$>)', the underlying type of the #2 parser argument"
                    :<+>: Quote (ShowType p2)
                 ^^,Indent 2 (ShowType b)
                 ^^,Text "and the type of the #2 argument of the function given as #1 argument,"
@@ -177,9 +177,8 @@ type CompositionError (name :: Symbol) (sug :: Symbol) p p1 p2 p3 f1 f2 a b1 b2 
 \end{code}
 
 Maybe the abstraction of the custom error to the |CompositionError| type synonym is a little bit
-forced as we must include as the last two arguments the relation that must hold for each function type between the type variables
-|a b1 b2 c|.
-
+forced as we must include as the last two arguments the relation that must hold for each function
+type between the type variables |a b1 b2 c|.
 
 \subsection{List with separation parsers}
 
@@ -217,7 +216,7 @@ pList1Sep_ng = Derived.pList1Sep_ng
 \subsection{Chain parsers}
 
 In the combinators for chaining parsers the customized type error is a bit involved.
-It must first check that the provided arguments are parser like types. Then the 
+It must first check that the provided arguments are parser like types. Then the
 underlying type of the first parser must be the function used to chain, and it should
 be of exactly two arguments that moreover match the type of the second argument parser.
 

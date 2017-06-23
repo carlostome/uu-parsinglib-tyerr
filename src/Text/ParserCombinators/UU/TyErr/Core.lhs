@@ -136,10 +136,10 @@ type signature,
 %if style /= newcode
 \begin{code}
 CustomErrors
-  ![ p1 :/~: p a :=>: ExpectedErrorMessage "(<$>)" 2 "a parser" p1
-    , ![ Check (IsParser p)]
-    , ...
-    ] => p1 -> ...
+  ![p1 :/~: p a :=>: ExpectedErrorMessage "(<$>)" 2 "a parser" p1
+  ^^,![ Check (IsParser p)]
+   , ...
+   ] => p1 -> ...
 \end{code}
 %endif
 
@@ -185,23 +185,23 @@ nested conditions within the type error DSL.
 (<$>) ::
   CustomErrors
     ![ ![ IsNotOfParserKind "(<$>)" 2 p2 p a1 ]
-      , ![ IsNotAParser p :/~: False :=>: ExpectedErrorMessage "(<$>)" 2 "a parser" p2]
-      , ![ f1  :/~: (a -> b) :=?>:
+    ^^,![ IsNotAParser p :/~: False :=>: ExpectedErrorMessage "(<$>)" 2 "a parser" p2]
+    ^^,![ f1  :/~: (a -> b) :=?>:
             !( ![ f1 :~?: p (a1 -> b) :=!>:
                     VSep  ![Text "The #1 argument to '(<$>)' is a function wrapped in a parser:"
-                            , Indent 2 (ShowType f1)
-                            , Text "Maybe you pretended to use '(<*>)'?" ]
+                          ^^,Indent 2 (ShowType f1)
+                          ^^,Text "Maybe you pretended to use '(<*>)'?" ]
                 , f1 :~?: p a1 :=!>:
                     VSep  ![Text "The #1 argument to '(<$>)' is a parser not a plain function:"
-                            , Indent 2 (ShowType f1)
-                            , Text "It matches the parser type of the #2 argument." :$$:
+                          ^^,Indent 2 (ShowType f1)
+                          ^^,Text "It matches the parser type of the #2 argument." :$$:
                                 Text "Maybe you pretended to use '(<|>)' or '(<<|>)'?" ]
                 , f1 :~?: p c :=!>:
                     VSep  ![Text "The #1 argument to '(<$>)' is a parser not a plain function:"
-                            , Indent 2 (ShowType f1)
-                            , Text "Maybe you pretended to use '(<*)' or '(*>)'?" ]]
+                          ^^,Indent 2 (ShowType f1)
+                          ^^,Text "Maybe you pretended to use '(<*)' or '(*>)'?" ]]
               , ExpectedErrorMessage "(<$>)" 1 "a function of at least 1 argument" f1)]
-      , ![ a :/~: a1 :=>:
+    ^^,![ a :/~: a1 :=>:
           VSep  ![Text "In the application of '(<$>)', the source type of the function in the #1 argument"
                     :$$: Quote (ShowType f1) :<>: Comma
                 ^^,Indent 2 (ShowType a)
@@ -209,34 +209,34 @@ nested conditions within the type error DSL.
                       :$$: Quote (ShowType p2) :<>: Comma
                 ^^,Indent 2 (ShowType a1)
                 ^^,Text "should match."]]
-      , ![ Check (IsParser p) ]
+    ^^,![ Check (IsParser p) ]
     ] => f1 -> p a1 -> p b
 (<$>) = (Applicative.<$>)
 
 (<*>) ::
   CustomErrors
     ![ ![ IsNotOfParserKind "(<*>)" 2 p2 p1 a1 ]
-      , ![ IsNotAParser p1 :/~: False :=>: ExpectedErrorMessage "(<*>)" 2 "a parser" p1]
-      , ![ IsNotOfParserKind "(<*>)" 1 p4 p3 f1 ]
-      , ![ IsNotAParser p3 :/~: False :=?>:
+    ^^,![ IsNotAParser p1 :/~: False :=>: ExpectedErrorMessage "(<*>)" 2 "a parser" p1]
+    ^^,![ IsNotOfParserKind "(<*>)" 1 p4 p3 f1 ]
+    ^^,![ IsNotAParser p3 :/~: False :=?>:
             !( ![ p4 :~?: (a1 -> b) :=!>:
                     VSep  ![Text "The #1 argument to '(<*>)' is a plain function,"
-                            ,Indent 2 (ShowType p4)
-                            ,Text "but it should be wrapped on a parser as,"
-                            ,Indent 2 (ShowType (p1 p4))
-                            ,Text "Maybe you pretended to use '(<$>)'?" ]]
+                          ^^,Indent 2 (ShowType p4)
+                          ^^,Text "but it should be wrapped on a parser as,"
+                          ^^,Indent 2 (ShowType (p1 p4))
+                          ^^,Text "Maybe you pretended to use '(<$>)'?" ]]
               , ExpectedErrorMessage "(<*>)" 1 "a parser with a function type of at least 1 argument" p3)]
-      , ![p1 :/~: p3 :=>: DifferentParsers "(<*>)" ![ !(p1, 2 ) , !(p3, 1) ]]
-      , ![ f1 :/~: (a -> b) :=?>:
+    ^^,![p1 :/~: p3 :=>: DifferentParsers "(<*>)" ![ !(p1, 2 ) , !(p3, 1) ]]
+    ^^,![ f1 :/~: (a -> b) :=?>:
             !( ![ f1 :~?: a1 :=!>:
                     VSep  ![Text "The #1 argument to '(<$>)' is a parser not a plain function:"
-                            , Indent 2 (ShowType f1)
-                            , Text "It matches the parser type of the #2 argument." :$$:
-                                Text "Maybe you pretended to use '(<|>)' or '(<<|>)'?" ]]
+                          ^^,Indent 2 (ShowType f1)
+                          ^^,Text "It matches the parser type of the #2 argument." :$$:
+                               Text "Maybe you pretended to use '(<|>)' or '(<<|>)'?" ]]
               ,      VSep  ![Text "The #1 argument to '(<$>)' is a parser without an underlying function:"
-                            , Indent 2 (ShowType p4)
-                            , Text "Maybe you pretended to use '(<*)' or '(*>)'?" ])]
-      , ![ a :/~: a1 :=>:
+                           ^^,Indent 2 (ShowType p4)
+                           ^^,Text "Maybe you pretended to use '(<*)' or '(*>)'?" ])]
+    ^^,![ a :/~: a1 :=>:
           VSep  ![Text "In the application of '(<*>)', the source type of the function in the #1 argument"
                     :$$: Quote (ShowType f1) :<>: Comma
                 ^^,Indent 2 (ShowType a1)
@@ -244,8 +244,8 @@ nested conditions within the type error DSL.
                       :<+>: Quote (ShowType p1)
                 ^^,Indent 2 (ShowType a)
                 ^^,Text "should match."]]
-      , ![ Check (IsParser p1) ]
-      ] => p4 -> p2 -> p1 b
+    ^^,![ Check (IsParser p1) ]
+     ] => p4 -> p2 -> p1 b
 (<*>) = (Applicative.<*>)
 \end{code}
 
@@ -257,19 +257,19 @@ he/she wanted to write |(<$>)| instead.
 \begin{code}
 type ErrorApplicative (name :: Symbol) p1 p2 p3 p4 a b c = CustomErrors
     ![ ![ IsNotOfParserKind name 2 p2 p1 a ]
-      , ![ IsNotAParser p1 :/~: False :=>: ExpectedErrorMessage name 2 "a parser" p1]
-      , ![ IsNotOfParserKind "(<*)" 1 p4 p3 b ]
-      , ![ IsNotAParser p3 :/~: False :=?>:
+    ^^,![ IsNotAParser p1 :/~: False :=>: ExpectedErrorMessage name 2 "a parser" p1]
+    ^^,![ IsNotOfParserKind "(<*)" 1 p4 p3 b ]
+    ^^,![ IsNotAParser p3 :/~: False :=?>:
             !( ![ p4 :~?: (a -> c) :=!>:
                     VSep  ![Text "The #1 argument to" :<+>: Quote (Text name) 
                               :<+>: Text "is a plain function,"
-                            ,Indent 2 (ShowType p4)
-                            ,Text "but it should be a parser type." :$$:
-                            Text "Maybe you pretended to use '(<$>)'?"]]
-              , ExpectedErrorMessage name 1 "a parser" p4)]
-      , ![ p1 :/~: p3 :=>: DifferentParsers name ![ !(p1, 2 ) , !(p3, 1) ]]
-      , ![ Check (IsParser p1) ]
-      ]
+                          ^^,Indent 2 (ShowType p4)
+                          ^^,Text "but it should be a parser type." :$$:
+                               Text "Maybe you pretended to use '(<$>)'?"]]
+            ^^,ExpectedErrorMessage name 1 "a parser" p4)]
+    ^^,![ p1 :/~: p3 :=>: DifferentParsers name ![ !(p1, 2 ) , !(p3, 1) ]]
+    ^^,![ Check (IsParser p1) ]
+     ]
 
 (<*) :: ErrorApplicative "(<*)" p1 p2 p3 p4 a b c => p4 -> p2 -> p1 b
 (<*)  = (Applicative.<*)
@@ -291,26 +291,26 @@ not a function and doesn't match |a| then we can suggest that maybe the intentio
 \begin{code}
 type ErrorAlternative (name :: Symbol) p1 p2 p3 p4 a b c = CustomErrors
     ![ ![ IsNotOfParserKind name 2 p2 p1 a ]
-      , ![ IsNotAParser p1 :/~: False :=>: ExpectedErrorMessage name 2 "a parser" p1]
-      , ![ IsNotOfParserKind "(<|>)" 1 p4 p3 b ]
-      , ![ IsNotAParser p3 :/~: False :=?>:
+    ^^,![ IsNotAParser p1 :/~: False :=>: ExpectedErrorMessage name 2 "a parser" p1]
+    ^^,![ IsNotOfParserKind "(<|>)" 1 p4 p3 b ]
+    ^^,![ IsNotAParser p3 :/~: False :=?>:
             !( ![ p4 :~?: (a -> c) :=!>:
                     VSep  ![Text "The #1 argument to" :<+>: Quote (Text name)
                               :<+>: Text  "is a plain function,"
-                            ,Indent 2 (ShowType p4)
-                            ,Text "but it should be a parser type." :$$:
-                            Text "Maybe you pretended to use '(<$>)'?"]]
-              , ExpectedErrorMessage name 1 "a parser" p4)]
-      , ![ p1 :/~: p3 :=>: DifferentParsers "(<|>)" ![ !(p1, 2 ) , !(p3, 1) ]]
-      , ![ a :/~: b   :=?>:
+                          ^^,Indent 2 (ShowType p4)
+                          ^^,Text "but it should be a parser type." :$$:
+                              Text "Maybe you pretended to use '(<$>)'?"]]
+            ^^,ExpectedErrorMessage name 1 "a parser" p4)]
+     ^^,![ p1 :/~: p3 :=>: DifferentParsers "(<|>)" ![ !(p1, 2 ) , !(p3, 1) ]]
+     ^^,![ a :/~: b   :=?>:
             !( ![ b :~?: (a -> c) :=!>:
                     VSep  ![Text "The #1 argument to" :<+>: Quote (Text name)
                               :<+>: Text "is a parser with an underlying function type,"
-                            ,Indent 2 (ShowType p4)
-                            ,Text "but it should match the #2 argument parser type." :$$:
-                            Text "Maybe you pretended to use '(<*>)'?"]]
+                          ^^,Indent 2 (ShowType p4)
+                          ^^,Text "but it should match the #2 argument parser type." :$$:
+                                Text "Maybe you pretended to use '(<*>)'?"]]
             , Text "Don")]
-      , ![ Check (IsParser p1) ]
+     ^^,![ Check (IsParser p1) ]
       ]
 
 (<|>) :: ErrorAlternative "(<|>)" p1 p2 p3 p4 a b c   => p4 -> p2 -> p1 a
@@ -333,17 +333,17 @@ suggest |(<*>)|.
 \begin{code}
 (<?>)  :: CustomErrors
   ![ ![ IsNotOfParserKind "(<?>)" 1 p2 p1 a ]
-    , ![ IsNotAParser p1 :/~: False :=>: ExpectedErrorMessage "(<|>)" 2 "a parser" p1]
-    , ![ str :/~: String :=?>:
-          !( ![ str :~?: p1 a :=!>:
-                  VCat  ![  Text "The #2 argument to (<?>) is a parser and not a String."
-                        ^^, Text "Maybe you wanted to use '(<<|>)' or '(<|>)'?"]
-              , str :~?: p1 b :=!>:
-                  VCat  ![  Text "The #2 argument to (<?>) is a parser and not a String."
-                        ^^, Text "Maybe you wanted to use '(<*)' or '(*>)'?"]]
-            , ExpectedErrorMessage "<?>" 2 "a String" str)]
-  ,  ![ Check (IsParser p1) ]
-  ] => p2 -> str -> p1 a
+  ^^,![IsNotAParser p1 :/~: False :=>: ExpectedErrorMessage "(<|>)" 2 "a parser" p1]
+  ^^,![str :/~: String :=?>:
+          !( ![str :~?: p1 a :=!>:
+                  VCat  ![Text "The #2 argument to (<?>) is a parser and not a String."
+                        ^^,Text "Maybe you wanted to use '(<<|>)' or '(<|>)'?"]
+             ^^,str :~?: p1 b :=!>:
+                  VCat  ![ Text "The #2 argument to (<?>) is a parser and not a String."
+                        ^^,Text "Maybe you wanted to use '(<*)' or '(*>)'?"]]
+          ^^,ExpectedErrorMessage "<?>" 2 "a String" str)]
+  ^^,![Check (IsParser p1) ]
+   ] => p2 -> str -> p1 a
 (<?>) = (Core.<?>)
 \end{code}
 
