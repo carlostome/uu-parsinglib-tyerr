@@ -99,7 +99,7 @@ provide greedy versions of the parsers that can be built from the Haskell
 To customize the type errors of the methods of this class we will export the
 original class but customized versions of the combinators it offer.
 
-Therefore, the combinators that we will customize here are,
+Therefore, the combinators that we will customize here are:
 
 
 %if style /= newcode
@@ -122,10 +122,10 @@ identical type. Except for the last two function the identifiers for rest of
 them are very similar and can be mistakenly interchanged in their use.
 
 Because the difference is most significant in the type of the first argument
-(except for |(<?>)|),  we will customize the type errors to be biased towards
-identifying first the second argument being a parser |p| applied to some type
-|a|, and then regarding the possible type errors that derivate from the first
-argument suggest other functions in the list as possible solutions.
+(except for |(<?>)|),  we will customize the type errors to be biased towards the second.
+This means that we will check the second argument to see if it is a parser |p| applied to some type
+|a|, and then in a second phase analyse the first argument for type errors and
+in the appropiate case suggest other functions from the list as possible corrections.
 
 However, there is a drawback with this approach. Within the type error
 framework we are not able to know with certainty that at a given point in
@@ -143,7 +143,7 @@ CustomErrors
 \end{code}
 %endif
 
-At ... , we would like that we have certainty of |p| being a parser.  However,
+At ... , we would like to know certainly that |p| is a parser.  However,
 the semantics of the combinators for customizing error messages do not ensure
 us that this is the case.
 
@@ -153,16 +153,16 @@ parser.  If the type of |p1| cannot be decomposed into some |p| applied to |a|
 then it is not a parser, maybe is some type of kind |*| such as Int, String,
 etc.
 
-But if the type can be decomposed, then we must make sure is not of some type
-that we know it is not an instance of |Parser|.  For example, |p = ((->) b)|
+However, if the type can be decomposed, then we must make sure it is not of some type
+that we know is not an instance of |Parser|.  For instance, |p = ((->) b)|
 has the right kind but it is not a parser.
 
 This are defined in \ref{sec:Utils} as |IsNotOfParserKind| and |IsNotAParser|.
-The former checks the condition of being of the appropriate shape and the later
+The former checks the condition of being of the appropriate shape and the latter
 discards cases we know are not parsers.
 
-Now that we have some kind of assurance (even not that much) that the second
-argument to the function looks like a parser, we can check the second argument
+At this point, we have some kind of assurance (even not that much) that the second
+argument to the function looks like a parser, we can check the first argument
 and prompt the user with useful hints about the possible \siblings he intended
 to use in case there is a type error.
 
@@ -172,13 +172,13 @@ instead. However, this interpretation only holds if we already know that the
 second argument is of type |p a| for a parser |p|. Therefore, we delay the check
 of the first argument to a second place to be able to make such suggestion.
 
-If instead the type of the first argument turns out to be  |p a| then we should 
-suggest that the user maybe wanted to use either |(<|>)| or |(<<|>)|.
+On the other hand, in case the type of the first argument turns out to be |p a| then we should 
+suggest the user that maybe he wanted to use either |(<|>)| or |(<<|>)|.
 As a last resource if the underlying types do not match we can still ask the
-user if he intended to use |(<*)| or |(*>)|.
+user if his intension was to use |(<*)| or |(*>)|.
 
 It is important to remark that if the first type is not a parser but a |String|
-then we won't suggest |(<?>)| as a \sibling. This is because we cannot encode
+we will not suggest |(<?>)| as a \sibling. This is because we cannot encode
 nested conditions within the type error DSL.
 
 \begin{code}
@@ -252,7 +252,7 @@ nested conditions within the type error DSL.
 For the functions |(<*)|, |(*>)| it is not possible to propose |(<*>)| as a
 \sibling because if the first parser has a function type inside is still well typed. However,
 for the case of the first argument being a plain function we can suggest the user that maybe
-he/she wanted to write |(<$>)| instead.
+they wanted to write |(<$>)| instead.
 
 \begin{code}
 type ErrorApplicative (name :: Symbol) p1 p2 p3 p4 a b c = CustomErrors
@@ -279,13 +279,12 @@ type ErrorApplicative (name :: Symbol) p1 p2 p3 p4 a b c = CustomErrors
 \end{code}
 
 For the combinators from |Alternative| and |ExtAlternative| , once we can assure with some certainty that the
-second argument is of type |p a| for some parser |p| and an argument a, we can proceed to
-check the type of the first argument. If its type is a plain function not wrapped in a parser
-then we should suggest |<$>| as \sibling.
+second argument is of type |p a|, we proceed to check the type of the first argument.
+In case its type is a plain function not wrapped in a parser then we should suggest |<$>| as \sibling.
 
-In the case it is a parser but the underlying type is a function such that the source type matches
+If it is a parser but the underlying type is a function such that the source type matches
 |a| then we should suggest |(<*>)| as a \sibling. In the remaining case if the underlying type is
-not a function and doesn't match |a| then we can suggest that maybe the intention was to use either
+not a function and does not match |a| then we can suggest that maybe the intention of the user was to use either
 |(<*)| or |(*>)|.
 
 \begin{code}
@@ -347,7 +346,7 @@ suggest |(<*>)|.
 (<?>) = (Core.<?>)
 \end{code}
 
-The last two combinators are not really \siblings of the above, but they are
+The last two combinators are not \siblings of the above, but they are
 between them. We can see that their type is similar except that one takes an
 extra argument.
 
@@ -379,12 +378,13 @@ must_be_non_empties :: CustomErrors
 must_be_non_empties   = Core.must_be_non_empties
 \end{code}
 
-As a final note, the |IsParser| typeclass is defined in the module |Core| as a means to be a 
+As a final note, the |IsParser| typeclass is defined in the module |Core| as a means to be an
 unifying class for the ones supported by the parsers. In our solution we keep the type of all combinators
-polymorphic in the parser type |p| as long as is an instance of this class. However, the only ever instance
-of the class declared in the library is |P st a|. Maybe it would have been much more easier, with less polymorphic
-functions type errors are much more easy to spell, to make all the functions work for only this type. We choose our approach
-because is more extensible in the sense that if another parser of |IsParser| is declared our custom type error messages do not need to be changed.
+polymorphic in the parser type |p| as long as there is an instance of this class. However, the only ever instance
+of the class declared in the library is |P st a|. Maybe it would have been much easier, with less polymorphic
+functions, to make all the functions work for only this type. We choose our approach
+as it is more extensible in the sense that if another parser of |IsParser| is declared, our custom type error messages
+do not need to be changed.
 
 %if style == newcode
 \begin{code}
@@ -408,12 +408,12 @@ parse_h :: (Eof t) => P t a -> t -> a
 
 In order to give a custom error message, we should note that the error for this
 functions has to be biased towards the type |P t a|, because if that argument
-is not a parser then it doesn't make sense to check whether the second
+is not a parser then it does not make sense to check whether the second
 argument's type |t| matches the parser state.
 
 Moreover, it is a common source of errors to use the evaluator function of a
 DSL, in this case parser combinators, and supply the arguments in the wrong
-order.  In case the first argument is not a parser, we can still check if the
+order.  If the first argument is not a parser, we can still check whether the
 second argument is a parser and the first argument matches the type for the
 state of the parser. In this situation we should suggest to the user that is
 very likely the arguments are swapped.
@@ -441,8 +441,8 @@ parse_h = Core.parse_h
 
 \subsection{Various combinators}
 
-Some other combinators present in the module that are not polymorphic in
-the parser type and can be very easily customized.
+Other combinators present in the module that are not polymorphic in
+the parser type and can be easily customized.
 
 \begin{code}
 addLength ::

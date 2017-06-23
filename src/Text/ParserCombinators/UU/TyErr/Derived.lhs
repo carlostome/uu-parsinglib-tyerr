@@ -40,7 +40,7 @@ pEither :: IsParser p => p a -> p b -> p (Either a b)
 %endif
 
 In this case, we have to check that both argument are parsers or at least look like
-parsers and if they are different give the appropiate error message.
+parsers and if they are different give the appropriate error message.
 
 \begin{code}
 pEither :: CustomErrors
@@ -66,12 +66,12 @@ types,
 \end{code}
 %endif
 
-The second combinator, |(<??>)| is very similar to the ones we defined in the core
-module and up to some extent it can be considered a \sibling of them. However, it is
-different in the sense that the plain parser type |p a| occurs in the first argument as
-opossed to those other combinators in \ref{subsec:Functor}. Unlike those other combinators, the
-error message of this type will not be biased towards any of its arguments and only in case the
-underlying arrow type if the second argument is not as expected we will make a suggestion.
+The second combinator, |(<??>)| is very similar to the ones we defined in \ref{subsec:Functor}
+and up to some extent it can be considered a \sibling of them. However, it is
+different in the sense that the plain parser type |p a| occurs in the first argument.
+Unlike the other combinators, the error message of this type will not be biased towards
+any of its arguments and only in case the underlying function type is not as expected we
+will make a suggestion.
 
 \begin{code}
 (<??>) ::
@@ -103,7 +103,7 @@ underlying arrow type if the second argument is not as expected we will make a s
 (<??>)         = (Derived.<??>)
 \end{code}
 
-The other combinator |<$$>| is much more easy to customize, as we can check independently the first
+The other combinator |<$$>| is easier to customize, as we can check independently the first
 argument to be a function and the second to be a parser.
 
 \begin{code}
@@ -125,7 +125,7 @@ argument to be a function and the second to be a parser.
 
 \subsection{Function composition}
 
-The follwowing two combinators, show a similarity between their types.
+The following two combinators show a similarity between their types:
 %if style /= newcode
 \begin{code}
 (<.>)  :: IsParser p => p (b -> c) -> p (a -> b) -> p (a -> c)
@@ -135,10 +135,10 @@ The follwowing two combinators, show a similarity between their types.
 
 In order to customize the error message we have to check that both arguments
 are parser like arguments, and they hold a function type inside. As a last step
-we should make sure the source/target of the arrow matches as expected.
+we should ensure the source/target of the arrow type matches as expected.
 
-When the types do not match as expected we can suggest the user that maybe
-he intended to use the other.
+When the types do not match we can suggest the user that maybe
+they intended to use the other.
 
 \begin{code}
 
@@ -176,15 +176,22 @@ type CompositionError (name :: Symbol) (sug :: Symbol) p p1 p2 p3 f1 f2 a b1 b2 
 (<..>) = (Derived.<..>)
 \end{code}
 
-Maybe the abstraction of the custom error to the |CompositionError| type synonym is a little bit
-forced as we must include as the last two arguments the relation that must hold for each function
-type between the type variables |a b1 b2 c|.
+Perhaps, the abstraction of the custom error to the |CompositionError| type synonym is slightly
+forced. This is because we must include as the last two arguments, the relation that must hold for each function
+type between its type variables |a b1 b2 c|.
 
 \subsection{List with separation parsers}
 
-For the familiy of separation parsers the error is quite straightforward to customize. We should
-make sure that both arguments are parser like arguments and finally the underlying typ
-has to match.
+The common type of this family of parsers is:
+
+%if style /= newcode
+\begin{code}
+... :: IsParser p => p a1 -> p a -> p [a]
+\end{code}
+%endif
+
+The error message for this kind of parsers is straightforward to customize. We should
+check that both arguments are parser like types and their underlying type matches.
 
 \begin{code}
 type PListSep (name :: Symbol) = forall p p1 p2 p3 a b.
@@ -215,15 +222,21 @@ pList1Sep_ng = Derived.pList1Sep_ng
 
 \subsection{Chain parsers}
 
-In the combinators for chaining parsers the customized type error is a bit involved.
+In the combinators for chaining parsers the customized type error is more involved.
 It must first check that the provided arguments are parser like types. Then the
 underlying type of the first parser must be the function used to chain, and it should
-be of exactly two arguments that moreover match the type of the second argument parser.
+be of exactly two arguments that also match the type of the second argument parser.
 
-An option to customize the error to this family of combinators would be to check the combinations
-of types for both arguments to check which one differs and then give a precise error for it.
-Another option, that we choose to follow is to tell the user that indeed we expect a function
-type of two arguments with the type |c -> c -> c|. Therefore, in a subsequent step we check if the
+%if style /= newcode
+\begin{code}
+... :: IsParser p => p (c -> c -> c) -> p c -> p c
+\end{code}
+%endif
+
+An option to customize the error message of this family of combinators would be to check the combinations
+of types for both arguments and analyse which one differs in type and give a precise error for it.
+Alternatively, we can tell the user that indeed we expect a function type of two arguments with type |c -> c -> c|. 
+In a subsequent step, we check if the
 |c| matches the underlying type of the second argument parser.
 
 \begin{code}
@@ -257,6 +270,7 @@ pChainl_ng = Derived.pChainl_ng
 \end{code}
 
 \subsection{Repeating parsers}
+\label{subsec:Repeating}
 
 There are some combinators that share a common pattern for repeatedly applying a
 given parser a fixed number of times. These are,
@@ -269,17 +283,13 @@ pAtMost  :: (IsParser f) => Int -> f a -> f [a]
 \end{code}
 %endif
 
-For the cutomized error of this family of combinators, we are going to first
-check that the second argument is a parser and then that the first one is an
-|Int|. In case we find the first one is not a parser but an |Int| we can suggest the user
-that maybe he swapped the arguments. The drawback of this approach is that we will make the
-suggestion even if the first one is already an |Int| and not a parser. However, there is no
+For the customized error of this family of combinators, at the beginning we
+check that the second argument is a parser and that the first one is an
+|Int|. In case we find the first one is not a parser, but an |Int|, we can suggest the user
+that maybe they swapped the arguments. The drawback of this approach is that we will make the
+suggestion even if the first argument is already an |Int| and not a parser. However, there is no
 way to encode in the framework this double dependency of the first being a parser and the
-second one being an |Int|.
-
-Moreover, this only occurs in the first check to see if the parser argument we expect has the
-right kind, this is a parser |p| applied to some type |a|, |p a|. Once we know it has this shape,
-we still have to rule out the cases where we know the type is not a parser.
+second being an |Int|.
 
 In order to encode all the three cases together we will make use of some type
 level machinery.
@@ -296,8 +306,8 @@ type Repeating (name :: Symbol) = forall int p p1 a.
       ] => int -> p1 -> p [a]
 \end{code}
 
-And now we simply need to write the type signatures using |Repeating| with the
-appropiate type level |String| for the name of the function. Maybe this could
+Now, we simply need to write the type signatures using |Repeating| with the
+appropriate type level |String| for the name of the function. Maybe this could
 be done more automatically by means of Template Haskell.
 
 \begin{code}
@@ -311,7 +321,7 @@ pAtMost  :: Repeating "pAtMost"
 pAtMost  = Derived.pAtMost
 \end{code}
 
-For the follwing combinator,
+For the following combinator:
 
 %if style /= newcode
 \begin{code}
@@ -319,19 +329,19 @@ pBetween :: (IsParser f) => Int -> Int -> f a -> f [a]
 \end{code}
 %endif
 
-the ideal type error message would be to point out in case the second argument
-to the function is of type |f a| that maybe one of the combinators above was the intended
-one to use. However, there is no mechanism that allows us to be sure that indeed is a parser
-in case the argument is not of |Int| type and therefore we would be misleading the user
-with the type error. Because of this we choose to only provide basic type error messages in
-case the arguments type do not match what was expected.
+If the second argument to the function is of type |f a| maybe the user intended
+to use one of the functions defined in \ref{subsec:Repeating}. However, there is
+no mechanism that allows us to ensure that indeed it is a parser and therefore we
+would be misleading the user with the type error. As a consequence, we choose
+only to provide basic type error messages in case the type of the arguments does not match.
+
 
 \begin{code}
 pBetween ::
   CustomErrors
-    ![ ![int1 :/~: Int  :=>: ExpectedErrorMessage "pBetween" 1 
+    ![ ![int1 :/~: Int  :=>: ExpectedErrorMessage "pBetween" 1
                                 "the minimum number of elements 'Int' to be recognised" int1
-       ^^,int2 :/~: Int  :=>: ExpectedErrorMessage "pBetween" 2 
+       ^^,int2 :/~: Int  :=>: ExpectedErrorMessage "pBetween" 2
                                 "the minimum number of elements 'Int' to be recognised" int2
         , IsNotOfParserKind name 3 p1 p a]
     ^^,![ IsNotAParser p  :/~: False :=>: ExpectedErrorMessage name 1 "a parser" p1]
@@ -343,7 +353,6 @@ pBetween = Derived.pBetween
 
 \subsection{Other combinators}
 
-The customization of the type error message of the follwing combinator,
 
 %if style /= newcode
 \begin{code}
@@ -351,13 +360,13 @@ pPacked :: IsParser p => p b1 -> p b2 -> p a -> p a
 \end{code}
 %endif
 
-Makes explicit why checking that the arguments are indeed parser does not scale well
-when there are more than two arguments with parser type. First we have to check that all
-three arguments have parser like arguments to have some kind of assurement. Then when we
-can more safely assume that at least they are parsers we should check that they are the same
-parser. However, we can only check a pair each time and because of this we should include
-in the error message all given parsers. Moreover, the checking has to be done in different steps
-not to prompt the user with more than one error message stating the error.
+The customization of the type error message for the combinator above makes explicit the reason why
+checking the type of several arguments to be parser does not scale well.
+
+First, we check that all three arguments have parser like types and then that they are of the same parser type.
+However, we can only check this in blocks of two each time, thus we should include in the error message all given parsers.
+Moreover, the checking has to be done in different steps so as not to prompt the user with more
+than one error message.
 
 \begin{code}
 pPacked :: CustomErrors
@@ -417,13 +426,12 @@ pList1_ng  = Derived.pList1_ng
 
 \subsection{Fold parsers}
 
-In the combinators for folding a parser we are going to customize the error
-message towrads first ensuring that we are applying the function to proper
-and then checking that the first argument is a tuple with the appropiate
-function type.
+In the combinators for folding a parser, we are going to customize the error
+message towards the second argument being a parser. Then we can check the first 
+argument to analyse if it is a tuple with a function type.
 
-The error message is a little bit long because many different type errors may
-arise from its use and have to be properly diagnosticated.
+The error message is longer due to the number of type variables involved to
+make a proper diagnostic of the error.
 
 \begin{code}
 type PFoldrError (name :: Symbol) = forall p1 p2 a a1 a2 a3 b f1 v t1.
@@ -466,7 +474,7 @@ pFoldr1_ng :: PFoldrError "pFoldr1_ng"
 pFoldr1_ng = Derived.pFoldr1_ng
 \end{code}
 
-We can also in an identical but way write customized error messages for folds with
+In an identical way we write customized error messages for folds with
 separation parsers.
 
 \begin{code}

@@ -16,6 +16,7 @@
 
 \section{Introduction}
 
+
 In this document we present the implementation of a wrapper over the
 uu-parsinglib library for giving domain specific error messages to the
 user.
@@ -51,44 +52,43 @@ in \ref{sec:Core}.
 
 \item
 Encoding requirements over type classes in the error messages is weak.
-We cannot be sure that at a certain point in the error message for example
-a type |p| is indeed an instance of the class |IsParser|. Therefore, we must
-take additional measures to ensure that we rule out cases we know do not belong 
-to the class. Moreover, this additional measurements poison the type of
-the combinator that no longer can be reduced to a type similar to the original one.
+We cannot ensure that at a specific point in the error message
+a type |p| is an instance of the class |IsParser|. Therefore, we must
+take additional measures to rule out cases we know do not belong
+to the class. Furthermore, this additional measurements poison the type of
+the combinator as no longer can be reduced to a type similar to the original one.
 
 \item
-The type signatures for customized error messages are insanely big because all
-the cases they have to account for.
+The type signatures for customized error messages are insanely big because of all
+the cases that have to be accounted for.
 
 \item
 The impossibility to include some form of reified expression where the type
 error is generated forbids the DSL writer to specify precisely in the type error
 message the source of the error. For now, the only way to refer to it is
-hardcode the name of the function involved and number the arguments (which
-indeed leaves room open for a lot of misleading in the errors in case it is wrong).
+hardcode the name of the function involved and number the arguments (when this is
+wrong can lead to misleading).
 
 \item
 The type |ErrorMessage| provided by GHC does not work as smoothly as it should be.
-For example, printing a type with |ShowType| with a complicated type at the
+For example, printing a complicated type with |ShowType| at the
 end of a sentence makes it unreadable. As an improvement to this mechanism
 I would like to have access to all the pretty printing machinery implemented
-in GHC through a type level API that can allow for much better formatting of
-the error messages.
+in GHC through a type level API that allows much better formatting of
+error messages.
 
 \item
 Providing the user with meaningful error messages according to the selected
 domain is not an easy task. Especially with polymorphic combinators and a lot of
 siblings present, the author of the library will have to take into account all
-the possible corner cases of type errors that could arise from the use of the
-library. Moreover, due to the somewhat limited expressivity of the type error
-DSL an educated choice has to be made to give preference to some of the
-arguments to a function over others.
+the possible corner cases of type errors that could arise from its use. Moreover,
+due to the limited expressivity of the type error DSL an educated choice has
+to be made in order to give preference to some of the arguments to a function over the others.
 
 \item
-Sometimes debugging customized type error messages with kind errors can be a bit
-cumbersome as the outputted error messages by GHC are just unreadable given a
-somewhat involved customized error. Maybe it could be nice to provide customized
+Sometimes debugging customized type error messages with kind errors can be
+cumbersome as the outputted error messages by GHC are just unreadable.
+Maybe it could be nice to provide customized
 kind error messages to the type error DSL itself.
 \end{itemize}
 
