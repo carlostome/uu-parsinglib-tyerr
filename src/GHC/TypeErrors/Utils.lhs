@@ -18,7 +18,7 @@ import           GHC.TypeErrors.PP
 This module defines domain specific combinators for type error messages
 for the library.
 
-\label{Utils}
+\label{sec:Utils}
 \begin{code}
 type FunctionType (arg :: Nat) (f :: *) (n :: Nat) =
   VCat  ![Text "Expected as #" :<>: ShowType arg :<+>:

@@ -82,6 +82,7 @@ import           Prelude                        (Applicative, Functor, Int,
 %endif
 
 \subsection{|Functor|, |Applicative|, |Alternative| and |ExtAlternative|}
+\label{subsec:Functor}
 
 Many of the functionality provided by this parser library comes from the use of
 |Functor|, |Applicative| and |Alternative| type classes defined in Haskell
