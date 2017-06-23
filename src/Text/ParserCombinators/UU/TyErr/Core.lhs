@@ -163,7 +163,7 @@ discards cases we know are not parsers.
 
 Now that we have some kind of assurance (even not that much) that the second
 argument to the function looks like a parser, we can check the second argument
-and prompt the user with useful hints about the possible \sibling\ he intended
+and prompt the user with useful hints about the possible \siblings he intended
 to use in case there is a type error.
 
 For example, in a call to |(<$>)| that makes use of a first argument of
@@ -347,34 +347,34 @@ suggest |(<*>)|.
 (<?>) = (Core.<?>)
 \end{code}
 
-The last two combinators are not really \sibling of the above, but they are
+The last two combinators are not really \siblings of the above, but they are
 between them. We can see that their type is similar except that one takes an
 extra argument.
 
 \begin{code}
 must_be_non_empty :: CustomErrors
-    ![ ![ IsNotOfParserKind "must_be_non_empty" 2 p2 p1 a
-        , str :/~: String :=>: ExpectedErrorMessage "must_be_non_empty" 1 "a String for the error message" str]
-     , ![ IsNotAParser p1 :/~: False :=>: ExpectedErrorMessage "must_be_non_empty" 2 "a parser" p1]
-  ,   ![ cf :/~: (c -> c) :=?>:
-          !( ![ cf :~?: (p1 b -> c -> c) :=!>:
-                  VCat ![ Text "One argument extra given to must_be_non_empty,"
-                        , Text "Maybe you wanted to use 'must_be_non_empties'?"]]
-              , ExpectedErrorMessage "must_be_non_empty" 3 "an argument" pbc  )]
-  ,   ![ Check (IsParser p1) ]
+  ![ ![ IsNotOfParserKind "must_be_non_empty" 2 p2 p1 a
+  ^^,str :/~: String :=>: ExpectedErrorMessage "must_be_non_empty" 1 "a String for the error message" str]
+  ^^,![ IsNotAParser p1 :/~: False :=>: ExpectedErrorMessage "must_be_non_empty" 2 "a parser" p1]
+  ^^,![ cf :/~: (c -> c) :=?>:
+         !( ![ cf :~?: (p1 b -> c -> c) :=!>:
+                VCat ![ Text "One argument extra given to must_be_non_empty,"
+                     ^^,Text "Maybe you wanted to use 'must_be_non_empties'?"]]
+         ^^,ExpectedErrorMessage "must_be_non_empty" 3 "an argument" pbc  )]
+  ^^,![ Check (IsParser p1) ]
   ] => str -> p2 -> cf
 must_be_non_empty   = Core.must_be_non_empty
 
 must_be_non_empties :: CustomErrors
-    ![ ![ IsNotOfParserKind "must_be_non_empties" 2 p2 p1 a
-       ,  str :/~: String :=>: ExpectedErrorMessage "must_be_non_empties" 1 "a String for the error message" str]
-     , ![ IsNotAParser p1 :/~: False :=>: ExpectedErrorMessage "must_be_non_empties" 2 "a parser" p1]
-     , ![ pbc :/~: (p3 b -> c -> c) :=?>:
-          !( ![ pbc :~?: (c -> c) :=!>: VCat ![ Text "Missing argument for must_be_non_empties,"
-                                              , Text "Maybe you wanted to use 'must_be_non_empty'?"]]
-              , ExpectedErrorMessage "must_be_non_empties" 3 "a parser" pbc  )]
-     , ![ p1 :/~: p3 :=>: DifferentParsers "(<|>)" ![ !(p1, 2 ) , !(p3, 3) ]]
-  ,   ![ Check (IsParser p1) ]
+  ![ ![ IsNotOfParserKind "must_be_non_empties" 2 p2 p1 a
+      ^^,str :/~: String :=>: ExpectedErrorMessage "must_be_non_empties" 1 "a String for the error message" str]
+  ^^,![ IsNotAParser p1 :/~: False :=>: ExpectedErrorMessage "must_be_non_empties" 2 "a parser" p1]
+  ^^,![ pbc :/~: (p3 b -> c -> c) :=?>:
+        !( ![ pbc :~?: (c -> c) :=!>: VCat ![ Text "Missing argument for must_be_non_empties,"
+                                            ^^,Text "Maybe you wanted to use 'must_be_non_empty'?"]]
+        ^^,ExpectedErrorMessage "must_be_non_empties" 3 "a parser" pbc  )]
+  ^^,![ p1 :/~: p3 :=>: DifferentParsers "(<|>)" ![ !(p1, 2 ) , !(p3, 3) ]]
+  ^^,![ Check (IsParser p1) ]
   ] => str -> p2 -> pbc
 must_be_non_empties   = Core.must_be_non_empties
 \end{code}
@@ -428,9 +428,9 @@ type ParserError (name :: Symbol) = forall p  t t1 a.
                       ^^,Text "and the #1 argument's type matches the state for such parser."
                       ^^,Text "Maybe, are the arguments swapped?"]]
           ^^, ExpectedErrorMessage name 1 "a parser" p )]
-     , ![ t1 :/~: t       :=>: ExpectedErrorMessage name 2 "the state for the parser" t ]
-     , ![ Check (Eof t) ]
-     ] => p -> t -> a
+    ^^,![ t1 :/~: t       :=>: ExpectedErrorMessage name 2 "the state for the parser" t ]
+    ^^,![ Check (Eof t) ]
+    ] => p -> t -> a
 
 parse :: ParserError "parse"
 parse  = Core.parse
@@ -441,10 +441,8 @@ parse_h = Core.parse_h
 
 \subsection{Various combinators}
 
-Some other combinators present in the module are,
-
-|addLength :: Int -> P st a -> P st a|
-|micro :: P state a -> Int -> P state a|
+Some other combinators present in the module that are not polymorphic in
+the parser type and can be very easily customized.
 
 \begin{code}
 addLength ::
@@ -460,10 +458,14 @@ micro ::
         ^^, p :/~: P state a :=>: ExpectedErrorMessage "micro" 1 "a parser" p]
     ] => p -> int -> P state a
 micro = Core.micro
+\end{code}
 
+%if style == newcode
+\begin{code}
 pSymExt ::  (forall a. (token -> state  -> Steps a) -> state -> Steps a) -> Core.Nat -> Maybe token -> P state token
 pSymExt = Core.pSymExt
 
 pSwitch :: (st1 -> (st2, st2 -> st1)) -> P st2 a -> P st1 a
 pSwitch  = Core.pSwitch
 \end{code}
+%endif
