@@ -90,7 +90,7 @@ underlying arrow type if the second argument is not as expected we will make a s
                         :$$: Quote (ShowType p4) :<>: Comma
                      ^^,Indent 2 (ShowType a1)
                      ^^,Text "matches." :$$: Text "Maybe you intended to use  '(<|>)' or '(<<|>)'?"]]
-          ,   FunctionTypeParserEq 2 f 1)]
+          ,   FunctionTypeParserEq "(<??>)" 2 f 1)]
    , ![ a1 :/~: a2        :=>:
           VSep  ![Text "In the application of '(<??>)', the underlying type of the #1 argument parser"
                      :<+>: Quote (ShowType p2) :<>: Comma
@@ -109,7 +109,7 @@ argument to be a function and the second to be a parser.
 \begin{code}
 (<$$>) :: CustomErrors
     ![ ![ IsNotOfParserKind "(<$$>)" 2 p2 p b
-        , f :/~: (a -> b1-> c) :=>: FunctionTypeParser 1 f 2]
+        , f :/~: (a -> b1-> c) :=>: FunctionTypeParser "(<$$>)" 1 f 2]
    , ![ IsNotAParser p  :/~: False :=>: ExpectedErrorMessage "(<$$>)" 2 "a parser" p2]
    , ![ b1 :/~: b  :=>:
           VSep  ![Text "In the application of '(<$$>)', the underlying type of the #2 parser argument"
@@ -149,8 +149,8 @@ type CompositionError (name :: Symbol) (sug :: Symbol) p p1 p2 p3 f1 f2 a b1 b2 
      , ![ IsNotAParser p  :/~: False :=>: ExpectedErrorMessage name 1 "a parser" p
         ,  IsNotAParser p2 :/~: False :=>: ExpectedErrorMessage name 2 "a parser" p2]
      , ![p :/~: p2 :=>: DifferentParsers "pEither" ![ !(p1, 1 ) , !(p3, 2) ]]
-     , ![ f1 :/~: tf1   :=>: FunctionTypeParser 1 f1 1
-        , f2 :/~: tf2   :=>: FunctionTypeParser 2 f2 1]
+     , ![ f1 :/~: tf1   :=>: FunctionTypeParser name 1 f1 1
+        , f2 :/~: tf2   :=>: FunctionTypeParser name 2 f2 1]
    ,![ b1 :/~: b2   :=?>:
         !( ![c :~?: a :=!>:
               VCat  ![Text "The target type of the #2 function,"
@@ -234,7 +234,7 @@ type PChain (name :: Symbol) = forall p p1 p2 p3 fc c1 c.
      ,  ![ IsNotAParser p  :/~: False :=>: ExpectedErrorMessage name 1 "a parser" p
         ,  IsNotAParser p2 :/~: False :=>: ExpectedErrorMessage name 2 "a parser" p2]
      , ![ p  :/~: p2   :=>: DifferentParsers name ![ !(p , 1) , !(p2 , 2)]]
-     , ![ fc :/~: (c1 -> c1 -> c1) :=>: FunctionTypeParserEq 1 p1 2 ]
+     , ![ fc :/~: (c1 -> c1 -> c1) :=>: FunctionTypeParserEq name 1 p1 2 ]
      , ![ c1 :/~: c :=>: VSep ![ Text "The underlying type of the #2 argument parser,"
                                , Indent 2 (Quote (ShowType p3))
                                , Text "has to match the type of arguments and target of the function in the #1 argument,"
@@ -329,11 +329,13 @@ case the arguments type do not match what was expected.
 \begin{code}
 pBetween ::
   CustomErrors
-    ![ ![ int1 :/~: Int  :=>: ExpectedErrorMessage "pBetween" 1 "the minimum number of elements 'Int' to be recognised" int1
-       ,  int2 :/~: Int  :=>: ExpectedErrorMessage "pBetween" 2 "the minimum number of elements 'Int' to be recognised" int2
+    ![ ![int1 :/~: Int  :=>: ExpectedErrorMessage "pBetween" 1 
+                                "the minimum number of elements 'Int' to be recognised" int1
+       ^^,int2 :/~: Int  :=>: ExpectedErrorMessage "pBetween" 2 
+                                "the minimum number of elements 'Int' to be recognised" int2
         , IsNotOfParserKind name 3 p1 p a]
-     , ![ IsNotAParser p  :/~: False :=>: ExpectedErrorMessage name 1 "a parser" p1]
-     , ![ Check (IsParser p) ]
+    ^^,![ IsNotAParser p  :/~: False :=>: ExpectedErrorMessage name 1 "a parser" p1]
+    ^^,![ Check (IsParser p) ]
      ] => int1 -> int2 -> p1 -> p [a]
 pBetween = Derived.pBetween
 \end{code}
@@ -399,18 +401,6 @@ pFail    = Derived.pFail
 pMaybe :: IsParser p => p a -> p (Maybe a)
 pMaybe   = Derived.pMaybe
 
-pFoldr    :: IsParser p => (a -> a1 -> a1, a1) -> p a -> p a1
-pFoldr = Derived.pFoldr
-
-pFoldr_ng ::  IsParser p => (a -> a1 -> a1, a1) -> p a -> p a1
-pFoldr_ng = Derived.pFoldr_ng
-
-
-pFoldr1    :: IsParser p => (v -> b -> b, b) -> p v -> p b
-pFoldr1 = Derived.pFoldr1
-
-pFoldr1_ng ::  IsParser p => (v -> b -> b, b) -> p v -> p b
-pFoldr1_ng = Derived.pFoldr1_ng
 
 pList    :: IsParser p => p a -> p [a]
 pList     = Derived.pList
@@ -422,18 +412,100 @@ pList1    :: IsParser p =>  p a -> p [a]
 pList1     = Derived.pList1
 pList1_ng :: IsParser p => p a -> p [a]
 pList1_ng  = Derived.pList1_ng
-
-pFoldrSep    ::  IsParser p => (v -> b -> b, b) -> p a -> p v -> p b
-pFoldrSep = Derived.pFoldrSep
-
-pFoldrSep_ng ::  IsParser p => (v -> b -> b, b) -> p a -> p v -> p b
-pFoldrSep_ng = Derived.pFoldrSep_ng
-
-pFoldr1Sep    ::   IsParser p => (a -> b -> b, b) -> p a1 ->p a -> p b
-pFoldr1Sep = Derived.pFoldr1Sep
-
-pFoldr1Sep_ng ::   IsParser p => (a -> b -> b, b) -> p a1 ->p a -> p b
-pFoldr1Sep_ng = Derived.pFoldr1Sep_ng
-
 \end{code}
 %endif
+
+\subsection{Fold parsers}
+
+In the combinators for folding a parser we are going to customize the error
+message towrads first ensuring that we are applying the function to proper
+and then checking that the first argument is a tuple with the appropiate
+function type.
+
+The error message is a little bit long because many different type errors may
+arise from its use and have to be properly diagnosticated.
+
+\begin{code}
+type PFoldrError (name :: Symbol) = forall p1 p2 a a1 a2 a3 b f1 v t1.
+  CustomErrors
+    ![ ![IsNotOfParserKind name 2 p2 p1 a]
+    ^^,![IsNotAParser p1 :/~: False :=>: ExpectedErrorMessage name 2 "a parser" p1
+       ^^,t1 :/~: (f1, b)  :=>: ExpectedErrorMessage name 1 "a pair" t1]
+    ^^,![f1 :/~: (a1 -> a2 -> a3) :=>: ExpectedErrorMessage name 1 "a function type as #1 component of the pair" f1]
+    ^^,![a1 :/~: a   :=>:
+            VSep ![ Text "In the application of" :<+>: Quote (Text name) :<>: Comma
+                     :<+>: Text "the type of the #1 argument of the function inside the tuple,"
+                 ^^,Indent 2 (Quote (ShowType f1))
+                 ^^,Text "has to match the underlying type of the parser of the #2 argument,"
+                 ^^,Indent 2 (Quote (ShowType a)) ]
+       ^^, a2 :/~: a3 :=>:
+            VSep ![ Text "In the application of" :<+>: Quote (Text name) :<>: Comma
+                      :<+>: Text "the #2 argument and return type of the function type inside the tuple,"
+                 ^^,Indent 2 (Quote (ShowType f1))
+                 ^^,Text "have to match."]]
+    ^^,![ a2 :/~: b   :=>:
+            VSep ![ Text "In the application of" :<+>: Quote (Text name) :<>: Comma
+                     :<+>: Text "the type of the #2 component of the tuple,"
+                 ^^,Indent 2 (Quote (ShowType b))
+                 ^^,Text "has to match the return type of the function of the #1 component,"
+                 ^^,Indent 2 (Quote (ShowType f1)) ]]
+    ^^,![ Check (IsParser p1) ]
+   ] => t1 -> p2 -> p1 a2
+
+pFoldr    :: PFoldrError "pFoldr"
+pFoldr = Derived.pFoldr
+
+pFoldr_ng ::  PFoldrError "pFoldr_ng"
+pFoldr_ng = Derived.pFoldr_ng
+
+
+pFoldr1    :: PFoldrError "pFoldr1"
+pFoldr1 = Derived.pFoldr1
+
+pFoldr1_ng :: PFoldrError "pFoldr1_ng"
+pFoldr1_ng = Derived.pFoldr1_ng
+\end{code}
+
+We can also in an identical but way write customized error messages for folds with
+separation parsers.
+
+\begin{code}
+type PFoldrSepError (name :: Symbol) = forall p1 p2 p3 p4 a a1 a2 a3 b f1 v t1.
+  CustomErrors
+    ![ ![ IsNotOfParserKind name 2 p2 p1 a
+       ^^,IsNotOfParserKind name 3 p4 p3 v]
+    ^^,![ IsNotAParser p1 :/~: False :=>: ExpectedErrorMessage name 2 "a parser" p1
+       ^^,IsNotAParser p3 :/~: False :=>: ExpectedErrorMessage name 3 "a parser" p3]
+    ^^,![ p1  :/~: p3      :=>: DifferentParsers name ![ !(p1, 2), !(p3 , 3)]
+        ^^,t1 :/~: (f1, b)  :=>: ExpectedErrorMessage name 1 "a pair" t1]
+    ^^,![ f1 :/~: (a1 -> a2 -> a3) :=>: ExpectedErrorMessage name 1 "a function type as #1 component of the pair" t1]
+    ^^,![ a1 :/~: v   :=>: VSep ![ Text "In the application of" :<+>: Quote (Text name) :<>: Comma
+                                    :<+>: Text "the type of the #1 argument of the function inside the tuple,"
+                                 , Indent 2 (Quote (ShowType f1))
+                                 , Text "has to match the underlying type of the parser of the #3 argument,"
+                                 , Indent 2 (Quote (ShowType v)) ]
+       ^^, a2 :/~: a3 :=>: VSep ![ Text "In the application of" :<+>: Quote (Text name) :<>: Comma
+                                   :<+>: Text "the second argument and return type of the function type inside the tuple,"
+                                 , Indent 2 (Quote (ShowType f1))
+                                 , Text "have to match."]]
+    ^^,![ a2 :/~: b   :=>: VSep ![ Text "In the application of" :<+>: Quote (Text name) :<>: Comma
+                                    :<+>: Text "the #2 component of the tuple,"
+                                 , Indent 2 (Quote (ShowType b))
+                                 , Text "has to match the return type of the function of the #1 component."
+                                 , Indent 2 (Quote (ShowType f1)) ]]
+    ^^,![ Check (IsParser p1) ]
+   ] => t1 -> p2 -> p4 -> p1 b
+
+pFoldrSep :: PFoldrSepError "pFoldrSep"
+pFoldrSep = Derived.pFoldrSep
+
+pFoldrSep_ng ::  PFoldrSepError "pFoldrSep_ng"
+pFoldrSep_ng = Derived.pFoldrSep_ng
+
+pFoldr1Sep    :: PFoldrSepError "pFoldr1Sep"
+pFoldr1Sep = Derived.pFoldr1Sep
+
+pFoldr1Sep_ng :: PFoldrSepError "pFoldr1Sep_ng"
+pFoldr1Sep_ng = Derived.pFoldr1Sep_ng
+\end{code}
+

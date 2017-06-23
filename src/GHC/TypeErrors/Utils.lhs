@@ -20,20 +20,23 @@ for the library.
 
 \label{sec:Utils}
 \begin{code}
-type FunctionType (arg :: Nat) (f :: *) (n :: Nat) =
-  VCat  ![Text "Expected as #" :<>: ShowType arg :<+>:
+type FunctionType (name :: Symbol) (arg :: Nat) (f :: *) (n :: Nat) =
+  VCat  ![Text "In the application of" :<+>: Quote (Text name) :<+>: 
+        ^^ Text ", is expected as #" :<>: ShowType arg :<+>:
         ^^ Text "argument a function type of" :<+>: ShowType n :<+>:
         ^^ Text "arguments but got" :<>: Colon
         ^^,Indent 4 (ShowType f) :<>: Dot ]
 
-type FunctionTypeParser (arg :: Nat) (f :: *) (n :: Nat) =
-  VCat  ![Text "Expected as #" :<>: ShowType arg :<+>:
+type FunctionTypeParser (name :: Symbol) (arg :: Nat)  (f :: *) (n :: Nat) =
+  VCat  ![Text "In the application of" :<+>: Quote (Text name) :<+>: 
+        ^^ Text ", is expected as #"  :<>: ShowType arg :<+>:
         ^^ Text "argument a parser with an underlying function type of" :<+>: ShowType n :<+>:
         ^^ Text "arguments but got" :<>: Colon
         ^^,Indent 4 (ShowType f) :<>: Dot ]
 
-type FunctionTypeParserEq (arg :: Nat) (f :: *) (n :: Nat) =
-  VCat  ![Text "Expected as #" :<>: ShowType arg :<+>:
+type FunctionTypeParserEq (name :: Symbol) (arg :: Nat) (f :: *) (n :: Nat) =
+  VCat  ![Text "In the application of" :<+>: Quote (Text name) :<+>: 
+           Text ", is expected as #" :<>: ShowType arg :<+>:
         ^^ Text "argument a parser with an underlying function type of" :<+>: ShowType n :<+>:
         ^^ Text "arguments, with all arguments and target of the same type but got" :<>: Colon
         ^^,Indent 2 (ShowType f) :<>: Dot ]
