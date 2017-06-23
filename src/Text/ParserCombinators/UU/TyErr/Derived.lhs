@@ -44,12 +44,12 @@ parsers and if they are different give the appropiate error message.
 
 \begin{code}
 pEither :: CustomErrors
-  ![ ![ IsNotOfParserKind "pEither" 1 p1 p  a
-      , IsNotOfParserKind "pEither" 2 p3 p2 b]
-   , ![ IsNotAParser p  :/~: False :=>: ExpectedErrorMessage "pExact" 1 "a parser" p
-      , IsNotAParser p2 :/~: False :=>: ExpectedErrorMessage "pExact" 2 "a parser" p2]
-   , ![p :/~: p2 :=>: DifferentParsers "pEither" ![ !(p1, 1 ) , !(p3, 2) ]]
-   , ![Check (IsParser p)]
+  ![ ![IsNotOfParserKind "pEither" 1 p1 p  a
+     ^^,IsNotOfParserKind "pEither" 2 p3 p2 b]
+  ^^,![IsNotAParser p  :/~: False :=>: ExpectedErrorMessage "pExact" 1 "a parser" p
+     ^^,IsNotAParser p2 :/~: False :=>: ExpectedErrorMessage "pExact" 2 "a parser" p2]
+  ^^,![p :/~: p2 :=>: DifferentParsers "pEither" ![ !(p1, 1 ) , !(p3, 2) ]]
+  ^^,![Check (IsParser p)]
    ]  =>  p1 -> p3 -> p (Either a b)
 pEither = Derived.pEither
 \end{code}
